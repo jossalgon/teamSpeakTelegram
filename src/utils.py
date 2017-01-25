@@ -37,7 +37,8 @@ class Utils:
             con = lite.connect(path)
             with con:
                 cur = con.cursor()
-                name = cur.execute("SELECT Name FROM TsUsers WHERE Ts_id=?", (ts_id,)).fetchone()[0]
+                name = cur.execute("SELECT Name FROM TsUsers WHERE Ts_id=?", (ts_id,)).fetchone()
+                name = name[0] if name is not None else None
                 return name
         except Exception as e:
             print(str(e))
