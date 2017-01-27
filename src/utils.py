@@ -5,50 +5,62 @@ import configparser
 
 config = configparser.ConfigParser()
 config.read('config.ini')
-ts_host = config['Telegram']['ts_host']
-ts_user = config['Telegram']['ts_user']
-ts_pass = config['Telegram']['ts_pass']
-DB_HOST = config['Telegram']['DB_HOST']
-DB_USER = config['Telegram']['DB_USER']
-DB_PASS = config['Telegram']['DB_PASS']
-DB_NAME = config['Telegram']['DB_NAME']
+ts_host = config['TS']['ts_host']
+ts_user = config['TS']['ts_user']
+ts_pass = config['TS']['ts_pass']
+DB_HOST = config['Database']['DB_HOST']
+DB_USER = config['Database']['DB_USER']
+DB_PASS = config['Database']['DB_PASS']
+DB_NAME = config['Database']['DB_NAME']
 
 
 class Utils:
     def create_database(self):
         con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
-        with con:
-            cur = con.cursor()
-            cur.execute(
-                "CREATE TABLE IF NOT EXISTS `TsUsers` ( \
-                  `Telegram_id` int(11) NOT NULL, \
-                  `Name` text NOT NULL, \
-                  `Ts_id` int(11) NOT NULL \
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;")
+        try:
+            with con.cursor() as cur:
+                cur.execute(
+                    "CREATE TABLE IF NOT EXISTS `TsUsers` ( \
+                      `Telegram_id` int(11) NOT NULL, \
+                      `Name` text NOT NULL, \
+                      `Ts_id` int(11) NOT NULL \
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;")
+        except Exception as exception:
+            print(str(exception))
+        finally:
+            if con:
+                con.commit()
+                con.close()
 
     def is_allow(self, user_id):
+        allow = False
+        con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
         try:
-            con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
-            with con:
-                cur = con.cursor()
+            with con.cursor() as cur:
                 cur.execute("SELECT EXISTS(SELECT 1 FROM TsUsers WHERE Telegram_id=%s LIMIT 1)", (str(user_id),))
-                allow = cur.fetchone()[0]
-                return bool(allow)
-        except Exception as e:
-            print(str(e))
-            return False
+                allow = bool(cur.fetchone()[0])
+        except Exception as exception:
+            print(str(exception))
+        finally:
+            if con:
+                con.close()
+            return allow
 
     def get_name(self, ts_id):
+        name = None
+        con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
         try:
-            con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
-            with con:
-                cur = con.cursor()
+            with con.cursor() as cur:
                 cur.execute("SELECT Name FROM TsUsers WHERE Ts_id=%s", (str(ts_id),))
                 name = cur.fetchone()
                 name = name[0] if name is not None else None
-                return name
-        except Exception as e:
-            print(str(e))
+
+        except Exception as exception:
+            print(str(exception))
+        finally:
+            if con:
+                con.close()
+            return name
 
     def ts_connect(self):
         clients = []
@@ -87,5 +99,5 @@ class Utils:
                 for client in ts_users:
                     text += '%s\n' % client
             return text
-        except Exception as e:
-            return e
+        except Exception as exception:
+            return exception
