@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import sqlite3 as lite
+import pymysql
 import ts3
 import configparser
 
@@ -7,25 +7,31 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 ts_user = config['Telegram']['ts_user']
 ts_pass = config['Telegram']['ts_pass']
+DB_HOST = config['Telegram']['DB_HOST']
+DB_USER = config['Telegram']['DB_USER']
+DB_PASS = config['Telegram']['DB_PASS']
+DB_NAME = config['Telegram']['DB_NAME']
 
 
 class Utils:
     def create_database(self):
-        path = 'data.db'
-        con = lite.connect(path)
+        con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
         with con:
             cur = con.cursor()
             cur.execute(
-                "CREATE TABLE IF NOT EXISTS TsUsers(Telegram_id INTEGER NOT NULL, Name TEXT NOT NULL, Ts_id INTEGER NOT NULL)")
+                "CREATE TABLE IF NOT EXISTS `TsUsers` ( \
+                  `Telegram_id` int(11) NOT NULL, \
+                  `Name` text NOT NULL, \
+                  `Ts_id` int(11) NOT NULL \
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;")
 
     def is_allow(self, user_id):
         try:
-            path = 'data.db'
-            con = lite.connect(path)
+            con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
             with con:
                 cur = con.cursor()
-                allow = \
-                cur.execute("SELECT EXISTS(SELECT 1 FROM TsUsers WHERE Telegram_id=? LIMIT 1)", (user_id,)).fetchone()[0]
+                cur.execute("SELECT EXISTS(SELECT 1 FROM TsUsers WHERE Telegram_id=%s LIMIT 1)", (str(user_id),))
+                allow = cur.fetchone()[0]
                 return bool(allow)
         except Exception as e:
             print(str(e))
@@ -33,11 +39,11 @@ class Utils:
 
     def get_name(self, ts_id):
         try:
-            path = 'data.db'
-            con = lite.connect(path)
+            con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
             with con:
                 cur = con.cursor()
-                name = cur.execute("SELECT Name FROM TsUsers WHERE Ts_id=?", (ts_id,)).fetchone()
+                cur.execute("SELECT Name FROM TsUsers WHERE Ts_id=%s", (str(ts_id),))
+                name = cur.fetchone()
                 name = name[0] if name is not None else None
                 return name
         except Exception as e:
