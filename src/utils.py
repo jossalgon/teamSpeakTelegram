@@ -5,6 +5,7 @@ import configparser
 
 config = configparser.ConfigParser()
 config.read('config.ini')
+ts_host = config['Telegram']['ts_host']
 ts_user = config['Telegram']['ts_user']
 ts_pass = config['Telegram']['ts_pass']
 DB_HOST = config['Telegram']['DB_HOST']
@@ -51,7 +52,7 @@ class Utils:
 
     def ts_connect(self):
         clients = []
-        with ts3.query.TS3Connection("localhost") as ts3conn:
+        with ts3.query.TS3Connection(ts_host) as ts3conn:
             # Note, that the client will wait for the response and raise a
             # **TS3QueryError** if the error id of the response is not 0.
             try:

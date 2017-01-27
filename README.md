@@ -7,6 +7,7 @@ TeamSpeakTelegram is a telegram bot that tells you who is connected to the teams
   ```
   [Telegram]
   token_id = YOUR_TELEGRAM_BOT_TOKEN
+  ts_host = YOUR_TS_HOST
   ts_user = serveradmin (OR YOUR TS USERNAME AS ADMIN)
   ts_pass = YOUR_TS_PASSWORD
   DB_HOST = YOUR_MYSQL_HOST
