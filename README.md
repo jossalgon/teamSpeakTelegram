@@ -28,11 +28,6 @@ TeamSpeakTelegram is a telegram bot that tells you who is connected to the teams
 4. Populate your database
 
   Create a entry for each user that you want to use the bot, with Telegram_id, the name you want to show and de TeamSpeak database ID.
-  ```
-  sqlite3
-  .open data.db
-  INSERT INTO Users(Telegram_id, Name, Ts_id) VALUES(XXXXXX, 'XXXXX', X);
-  ```
 
 ## Commands
 Command | Uses
