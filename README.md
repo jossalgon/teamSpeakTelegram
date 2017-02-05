@@ -1,9 +1,20 @@
 # TeamSpeakTelegram
 TeamSpeakTelegram is a telegram bot that tells you who is connected to the teamspeak server to know when your friends are online. It can be used both in private and in a group chat.
 
-## Installation
-1. Create a config.ini file with:
 
+## Installing
+1. Install or upgrade teamSpeakTelegram from pip:
+  ```
+  $ pip install teamSpeakTelegram --upgrade
+  ```
+Or you can install from source:
+  ```
+  $ git clone https://github.com/jossalgon/teamSpeakTelegram.git
+  $ cd teamSpeakTelegram
+  $ python setup.py install
+  ```
+
+2. Create a config.ini file with:
   ```
   [Telegram]
   token_id = YOUR_TELEGRAM_BOT_TOKEN
@@ -20,19 +31,16 @@ TeamSpeakTelegram is a telegram bot that tells you who is connected to the teams
   DB_NAME = YOUR_MYSQL_DB_NAME
   ```
 
-2. Install requirements
-  ```
-  sudo pip install -r requirements.txt
-  ```
-
 3. Run the bot
   ```
-  python3 teamspeak.py &
+  python3 -m teamSpeakTelegram
   ```
 
 4. Populate your database
 
   Create a entry for each user that you want to use the bot, with Telegram_id, the name you want to show and de TeamSpeak database ID.
+
+
 
 ## Commands
 Command | Uses
