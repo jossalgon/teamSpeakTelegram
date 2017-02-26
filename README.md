@@ -47,5 +47,6 @@ Command | Uses
 ------- | -----
 /start | Reply with a welcome message
 /ts | Reply with the connected users
+/mention | Join to receive a forwarded messsage if contains @flandas
 
 ![Example bot](http://imgur.com/lkx8Mqn.jpg)

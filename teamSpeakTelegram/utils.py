@@ -2,6 +2,7 @@
 import pymysql
 import ts3
 import configparser
+import logging
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -13,6 +14,9 @@ DB_USER = config['Database']['DB_USER']
 DB_PASS = config['Database']['DB_PASS']
 DB_NAME = config['Database']['DB_NAME']
 
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 def create_database():
     con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
@@ -23,6 +27,10 @@ def create_database():
                   `Telegram_id` int(11) NOT NULL, \
                   `Name` text NOT NULL, \
                   `Ts_id` int(11) NOT NULL \
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4; \
+                CREATE TABLE IF NOT EXISTS `TsMentions` ( \
+                  `Group_id` text NOT NULL, \
+                  `User_id` int(11) NOT NULL \
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;")
     except Exception as exception:
         print(str(exception))
@@ -104,3 +112,49 @@ def ts_stats():
         return text
     except Exception as exception:
         return exception
+
+
+def get_mention_users_by_group(group_id):
+    con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
+    mention_users = list()
+    try:
+        with con.cursor() as cur:
+            cur.execute("SELECT User_id FROM TsMentions WHERE Group_id = %s", (str(group_id),))
+            rows = cur.fetchall()
+            for row in rows:
+                mention_users.append(row[0])
+    except Exception as exception:
+        print(exception)
+    finally:
+        if con:
+            con.close()
+        return mention_users
+
+
+def mention_forwarder(bot, update):
+    message = update.message
+    group_id = message.chat_id
+    user_ids = get_mention_users_by_group(group_id)
+    for user_id in user_ids:
+        bot.forward_message(user_id, group_id, message.message_id)
+
+
+def mention_toggle(group_id, user_id):
+    con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
+    try:
+        with con.cursor() as cur:
+            cur.execute("SELECT EXISTS(SELECT 1 FROM TsMentions WHERE Group_id=%s and User_id=%s LIMIT 1)",
+                        (str(group_id), str(user_id)))
+            mention = bool(cur.fetchone()[0])
+            if not mention:
+                cur.execute("INSERT INTO TsMentions VALUES (%s, %s)", (str(group_id), str(user_id)))
+                return '✅ Menciones activadas'
+            else:
+                cur.execute('DELETE FROM TsMentions WHERE Group_id = %s and User_id = %s', (str(group_id), str(user_id)))
+                return '❎ Menciones desactivadas'
+    except Exception:
+        logger.error('Fatal error in mention_toggle', exc_info=True)
+    finally:
+        if con:
+            con.commit()
+            con.close()
