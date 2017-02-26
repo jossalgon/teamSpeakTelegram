@@ -136,7 +136,10 @@ def mention_forwarder(bot, update):
     group_id = message.chat_id
     user_ids = get_mention_users_by_group(group_id)
     for user_id in user_ids:
-        bot.forward_message(user_id, group_id, message.message_id)
+        try:
+            bot.forward_message(user_id, group_id, message.message_id)
+        except:
+            pass
 
 
 def mention_toggle(group_id, user_id):
