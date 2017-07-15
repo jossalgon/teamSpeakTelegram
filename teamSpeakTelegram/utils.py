@@ -3,6 +3,7 @@ import pymysql
 import ts3
 import configparser
 import logging
+import uuid
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -18,6 +19,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
+
 def create_database():
     con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
     try:
@@ -26,11 +28,15 @@ def create_database():
                 "CREATE TABLE IF NOT EXISTS `TsUsers` ( \
                   `Telegram_id` int(11) NOT NULL, \
                   `Name` text NOT NULL, \
-                  `Ts_id` int(11) NOT NULL \
+                  `Ts_id` int(11) \
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4; \
                 CREATE TABLE IF NOT EXISTS `TsMentions` ( \
                   `Group_id` text NOT NULL, \
                   `User_id` int(11) NOT NULL \
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4; \
+                CREATE TABLE IF NOT EXISTS `Invitations` ( \
+                  `token` text NOT NULL, \
+                  `usedBy` int(11) \
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;")
     except Exception as exception:
         print(str(exception))
@@ -155,6 +161,51 @@ def mention_toggle(group_id, user_id):
             else:
                 cur.execute('DELETE FROM TsMentions WHERE Group_id = %s and User_id = %s', (str(group_id), str(user_id)))
                 return '❎ Menciones desactivadas'
+    except Exception:
+        logger.error('Fatal error in mention_toggle', exc_info=True)
+    finally:
+        if con:
+            con.commit()
+            con.close()
+
+
+def add_user(user_id, name):
+    con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
+    try:
+        with con.cursor() as cur:
+            cur.execute("INSERT INTO TsUsers Values(%s, %s, 0)", (str(user_id), str(name)))
+    except Exception:
+        logger.error('Fatal error in add_user', exc_info=True)
+    finally:
+        if con:
+            con.commit()
+            con.close()
+
+
+def generate_invitation():
+    token = str(uuid.uuid4())
+    con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
+    try:
+        with con.cursor() as cur:
+            cur.execute("INSERT INTO Invitations(token) Values(%s)", (str(token),))
+        return token
+    except Exception:
+        logger.error('Fatal error in add_user', exc_info=True)
+    finally:
+        if con:
+            con.commit()
+            con.close()
+
+
+def validate_invitation_token(token, user_id):
+    con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
+    try:
+        with con.cursor() as cur:
+            cur.execute("SELECT EXISTS(SELECT 1 FROM Invitations WHERE token=%s LIMIT 1)", (str(token)))
+            valid = bool(cur.fetchone()[0])
+            if valid:
+                cur.execute("UPDATE Invitations SET usedBy=%s WHERE token=%s", (str(user_id), str(token)))
+                return True
     except Exception:
         logger.error('Fatal error in mention_toggle', exc_info=True)
     finally:

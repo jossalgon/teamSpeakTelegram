@@ -18,6 +18,7 @@ Or you can install from source:
   ```
   [Telegram]
   token_id = YOUR_TELEGRAM_BOT_TOKEN
+  admin_id = YOUR_TELEGRAM_ID
   
   [TS]
   ts_host = YOUR_TS_HOST
@@ -30,16 +31,16 @@ Or you can install from source:
   DB_PASS = YOUR_MYSQL_PASS
   DB_NAME = YOUR_MYSQL_DB_NAME
   ```
+If you don't know your telegram id, leave it blank, start the bot and use the command /id.
 
 3. Run the bot
   ```
   python3 -m teamSpeakTelegram
   ```
 
-4. Populate your database
+4. Invite users
 
-  Create a entry for each user that you want to use the bot, with Telegram_id, the name you want to show and de TeamSpeak database ID.
-
+  Use the command /generate to generate invitation links, the users logged with this link could use the bot.
 
 
 ## Commands
@@ -48,5 +49,6 @@ Command | Uses
 /start | Reply with a welcome message
 /ts | Reply with the connected users
 /mention | Join to receive a forwarded messsage if contains @flandas
-
+/generate | Generate an invitation link
+/id | Reply with your telegram id
 ![Example bot](http://imgur.com/lkx8Mqn.jpg)
