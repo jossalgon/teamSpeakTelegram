@@ -197,7 +197,7 @@ def generate_invitation():
             con.close()
 
 
-def validate_invitation_token(token, user_id):
+def validate_invitation_token(token, user_id, name):
     con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
     try:
         with con.cursor() as cur:
@@ -205,6 +205,7 @@ def validate_invitation_token(token, user_id):
             valid = bool(cur.fetchone()[0])
             if valid:
                 cur.execute("UPDATE Invitations SET usedBy=%s WHERE token=%s", (str(user_id), str(token)))
+                cur.execute("INSERT INTO TsUsers Values(%s, %s, 0)", (str(user_id), str(name)))
                 return True
     except Exception:
         logger.error('Fatal error in mention_toggle', exc_info=True)

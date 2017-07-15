@@ -1,5 +1,10 @@
 # -*- encoding: utf-8 -*-
-
+from telegram import InlineKeyboardButton
+from telegram import InlineKeyboardMarkup
+from telegram import InlineQueryResultArticle
+from telegram import InputTextMessageContent
+from telegram.ext import ChosenInlineResultHandler
+from telegram.ext import InlineQueryHandler
 from telegram.ext import Updater, CommandHandler, RegexHandler
 import logging
 import configparser
@@ -23,7 +28,7 @@ def start(bot, update, args):
     user = message.from_user
     res = False
     if args:
-        res = utils.validate_invitation_token(token=args[0], user_id=user.id)
+        res = utils.validate_invitation_token(token=args[0], user_id=user.id, name=user.first_name)
 
     if res:
         text = "Welcome %s you're now activated, using /ts you can check who's in teamspeak." % user.first_name
@@ -46,9 +51,13 @@ def ts_stats(bot, update):
 def generate_invitation(bot, update):
     message = update.message
     token = utils.generate_invitation()
-    link = 'Unique invitation link: '
-    link += 'https://telegram.me/%s?start=%s' % (bot.username, token)
-    bot.sendMessage(message.chat_id, link, reply_to_message_id=message.message_id)
+    link = 'https://telegram.me/%s?start=%s' % (bot.username, token)
+    share_link = 'https://telegram.me/share/url?url={0}&text=Click%20the%20link%20to%20join%20the%20teamspeak%20bot'.format(link)
+    keyboard = [[InlineKeyboardButton('Join', url=link)],
+                [InlineKeyboardButton('Share link', url=share_link)]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.sendMessage(message.chat_id, '🎈 Welcome to TeamSpeak bot 🎈\n\nThis is an invitation to use the TeamSpeak bot',
+                    reply_markup=reply_markup)
 
 
 def mention_toggle(bot, update):
@@ -89,6 +98,7 @@ def main():
     dp.add_handler(CommandHandler('generate', generate_invitation, lambda msg: msg.from_user.id == ADMIN_ID))
     dp.add_handler(CommandHandler('id', get_id))
     dp.add_handler(RegexHandler(r'(?i).*\@flandas\b', utils.mention_forwarder))
+
 
     # log all errors
     dp.add_error_handler(log_error)
