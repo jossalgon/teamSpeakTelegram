@@ -201,7 +201,7 @@ def validate_invitation_token(token, user_id):
     con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
     try:
         with con.cursor() as cur:
-            cur.execute("SELECT EXISTS(SELECT 1 FROM Invitations WHERE token=%s LIMIT 1)", (str(token)))
+            cur.execute("SELECT EXISTS(SELECT 1 FROM Invitations WHERE token=%s AND usedBy IS NULL LIMIT 1)", (str(token)))
             valid = bool(cur.fetchone()[0])
             if valid:
                 cur.execute("UPDATE Invitations SET usedBy=%s WHERE token=%s", (str(user_id), str(token)))
