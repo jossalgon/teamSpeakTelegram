@@ -14,8 +14,8 @@ from teamSpeakTelegram import utils
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-TOKEN_ID = config.get('Telegram', 'token_id')
-ADMIN_ID = int(config.get('Telegram', 'admin_id'))
+TOKEN_ID = config.get('Telegram', 'token_id') if config.has_option('Telegram', 'token_id') else None
+ADMIN_ID = config.getint('Telegram', 'admin_id') if config.has_option('Telegram', 'admin_id') else None
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
