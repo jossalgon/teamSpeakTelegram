@@ -1,10 +1,7 @@
 # -*- encoding: utf-8 -*-
 from telegram import InlineKeyboardButton
 from telegram import InlineKeyboardMarkup
-from telegram import InlineQueryResultArticle
-from telegram import InputTextMessageContent
-from telegram.ext import ChosenInlineResultHandler
-from telegram.ext import InlineQueryHandler
+from telegram.ext import CallbackQueryHandler
 from telegram.ext import Updater, CommandHandler, RegexHandler
 import logging
 import configparser
@@ -31,9 +28,9 @@ def start(bot, update, args):
         res = utils.validate_invitation_token(token=args[0], user_id=user.id, name=user.first_name)
 
     if res:
-        text = "Welcome %s you're now activated, using /ts you can check who's in teamspeak." % user.first_name
+        text = "Welcome %s you're now activated, using /who or /ts you can check who's in teamspeak." % user.first_name
     elif utils.is_allow(user.id):
-        text = "Hello %s, using /ts you can check who's in teamspeak." % user.first_name
+        text = "Hello %s, using /who or /ts you can check who's in teamspeak." % user.first_name
     else:
         text = "Welcome, ask admin to generate an invitation link via /generate"
     bot.sendMessage(message.chat_id, text, reply_to_message_id=message.message_id)
@@ -45,7 +42,7 @@ def ts_stats(bot, update):
         stats = utils.ts_stats()
     else:
         stats = "You aren't allow to use this"
-    bot.sendMessage(chat_id=message.chat_id, text=stats, reply_to_message_id=message.message_id)
+    bot.send_message(message.chat.id, stats, reply_to_message_id=message.message_id)
 
 
 def generate_invitation(bot, update):
@@ -93,11 +90,13 @@ def main():
     # on different commands - answer in Telegram
     dp.add_handler(CommandHandler('start', start, pass_args=True))
     dp.add_handler(CommandHandler('help', start))
-    dp.add_handler(CommandHandler('ts', ts_stats))
+    dp.add_handler(CommandHandler('who', ts_stats))
+    dp.add_handler(CommandHandler('ts', utils.ts_view))
     dp.add_handler(CommandHandler('mention', mention_toggle))
     dp.add_handler(CommandHandler('generate', generate_invitation, lambda msg: msg.from_user.id == ADMIN_ID))
     dp.add_handler(CommandHandler('id', get_id))
     dp.add_handler(RegexHandler(r'(?i).*\@flandas\b', utils.mention_forwarder))
+    dp.add_handler(CallbackQueryHandler(utils.callback_query_handler))
 
 
     # log all errors

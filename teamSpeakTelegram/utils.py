@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import pymysql
 import ts3
+from ts3.examples.viewer import ChannelTreeNode
+from telegram import InlineKeyboardButton
+from telegram import InlineKeyboardMarkup
 import configparser
 import logging
 import uuid
@@ -104,6 +107,57 @@ def ts_connect():
                 else:
                     clients.append(client['client_nickname'])
     return clients
+
+
+def ts_view(bot, update, message_id=None, chat_id=None):
+    message = update.message
+    if is_allow(update.effective_user.id):
+        res = get_ts_view()
+
+        keyboard = [[InlineKeyboardButton("Actualizar", callback_data='TS_UPDATE')]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        if message_id and chat_id:
+            bot.edit_message_text(text=res, chat_id=chat_id, message_id=message_id, reply_markup=reply_markup,
+                                  parse_mode='Markdown')
+        else:
+            bot.send_message(message.chat.id, res, reply_to_message_id=message.message_id, reply_markup=reply_markup,
+                             parse_mode='Markdown')
+    else:
+        bot.send_message(message.chat.id, "You aren't allow to use this", reply_to_message_id=message.message_id)
+
+
+def get_ts_view():
+    with ts3.query.TS3Connection(ts_host) as ts3conn:
+        try:
+            ts3conn.login(
+                client_login_name=ts_user,
+                client_login_password=ts_pass
+            )
+        except ts3.query.TS3QueryError as err:
+            print("Login failed:", err.resp.error["msg"])
+            exit(1)
+
+        channel_tree = ChannelTreeNode.build_tree(ts3conn, sid=1)
+        res = channel_tree_to_str(channel_tree)
+    return res
+
+
+def channel_tree_to_str(channel_tree, indent=0):
+    res = ""
+    if channel_tree.is_root():
+        res += " " * (indent * 3) + "👁‍🗨" + channel_tree.info["virtualserver_name"]
+    else:
+        res += "\n" + " " * (indent * 3) + "▫️" + channel_tree.info["channel_name"]
+        for client in channel_tree.clients:
+            # Ignore query clients
+            if client["client_type"] == "1":
+                continue
+            res += "\n" + " " * (indent * 3 + 3) + "🔘 *" + client["client_nickname"] + "*"
+    for child in channel_tree.childs:
+        if len(child.clients) > 0:
+            res += channel_tree_to_str(child, indent=indent + 1)
+    return res
 
 
 def ts_stats():
@@ -213,3 +267,14 @@ def validate_invitation_token(token, user_id, name):
         if con:
             con.commit()
             con.close()
+
+
+def callback_query_handler(bot, update):
+    query_data = update.callback_query.data
+    if query_data.startswith('TS_UPDATE'):
+        a = get_ts_view()
+        if a == update.effective_message.text_markdown:
+            bot.answer_callback_query(update.callback_query.id, 'Sin cambios')
+        else:
+            ts_view(bot, update, message_id=update.effective_message.message_id, chat_id=update.effective_chat.id)
+            bot.answer_callback_query(update.callback_query.id, 'Actualizado correctamente')

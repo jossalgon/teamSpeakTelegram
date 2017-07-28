@@ -47,7 +47,8 @@ If you don't know your telegram id, leave it blank, start the bot and use the co
 Command | Uses
 ------- | -----
 /start | Reply with a welcome message
-/ts | Reply with the connected users
+/who | Reply with the connected users
+/ts | Reply with the channels and connected users
 /mention | Join to receive a forwarded messsage if contains @flandas
 /generate | Generate an invitation link
 /id | Reply with your telegram id
