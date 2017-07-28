@@ -81,6 +81,21 @@ def get_name(ts_id):
         return name
 
 
+def get_user_ids():
+    res = ""
+    con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
+    try:
+        with con.cursor() as cur:
+            cur.execute("SELECT Telegram_id FROM TsUsers")
+            res = [user_id[0] for user_id in cur.fetchall()]
+    except Exception as exception:
+        print(str(exception))
+    finally:
+        if con:
+            con.close()
+        return res
+
+
 def ts_connect():
     clients = []
     with ts3.query.TS3Connection(ts_host) as ts3conn:

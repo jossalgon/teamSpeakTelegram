@@ -52,6 +52,7 @@ Command | Uses
 /mention | Join to receive a forwarded messsage if contains @flandas
 /generate | Generate an invitation link
 /id | Reply with your telegram id
+/notify | Send a message with the args received from the command to all the telegram users
 
 
 ![Example bot](http://imgur.com/lkx8Mqn.jpg)

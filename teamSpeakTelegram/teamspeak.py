@@ -2,6 +2,7 @@
 from telegram import InlineKeyboardButton
 from telegram import InlineKeyboardMarkup
 from telegram.ext import CallbackQueryHandler
+from telegram.ext import Filters
 from telegram.ext import Updater, CommandHandler, RegexHandler
 import logging
 import configparser
@@ -71,6 +72,17 @@ def get_id(bot, update):
     bot.sendMessage(message.chat_id, message.from_user.id, reply_to_message_id=message.message_id)
 
 
+def notify(bot, update, args):
+    text = ' '.join(args)
+    text = text.replace('\\n', '\n')
+    if text:
+        for user_id in utils.get_user_ids():
+            try:
+                bot.send_message(user_id, text, parse_mode='Markdown')
+            except:
+                pass
+
+
 def log_error(bot, update, error):
     logger.warning('Update "%s" caused error "%s"' % (update, error))
 
@@ -93,7 +105,8 @@ def main():
     dp.add_handler(CommandHandler('who', ts_stats))
     dp.add_handler(CommandHandler('ts', utils.ts_view))
     dp.add_handler(CommandHandler('mention', mention_toggle))
-    dp.add_handler(CommandHandler('generate', generate_invitation, lambda msg: msg.from_user.id == ADMIN_ID))
+    dp.add_handler(CommandHandler('generate', generate_invitation, Filters.user(user_id=ADMIN_ID)))
+    dp.add_handler(CommandHandler('notify', notify, Filters.user(user_id=ADMIN_ID), pass_args=True))
     dp.add_handler(CommandHandler('id', get_id))
     dp.add_handler(RegexHandler(r'(?i).*\@flandas\b', utils.mention_forwarder))
     dp.add_handler(CallbackQueryHandler(utils.callback_query_handler))
