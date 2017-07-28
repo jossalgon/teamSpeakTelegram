@@ -8,6 +8,8 @@ import configparser
 import logging
 import uuid
 
+from teamSpeakTelegram import _
+
 config = configparser.ConfigParser()
 config.read('config.ini')
 ts_host = config['TS']['ts_host']
@@ -129,7 +131,7 @@ def ts_view(bot, update, message_id=None, chat_id=None):
     if is_allow(update.effective_user.id):
         res = get_ts_view()
 
-        keyboard = [[InlineKeyboardButton("Actualizar", callback_data='TS_UPDATE')]]
+        keyboard = [[InlineKeyboardButton(_("Update"), callback_data='TS_UPDATE')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         if message_id and chat_id:
@@ -139,7 +141,7 @@ def ts_view(bot, update, message_id=None, chat_id=None):
             bot.send_message(message.chat.id, res, reply_to_message_id=message.message_id, reply_markup=reply_markup,
                              parse_mode='Markdown')
     else:
-        bot.send_message(message.chat.id, "You aren't allow to use this", reply_to_message_id=message.message_id)
+        bot.send_message(message.chat.id, _("You aren't allow to use this"), reply_to_message_id=message.message_id)
 
 
 def get_ts_view():
@@ -178,9 +180,9 @@ def channel_tree_to_str(channel_tree, indent=0):
 def ts_stats():
     try:
         ts_users = ts_connect()
-        text = '👁‍🗨 Conectados:\n'
+        text = '👁‍🗨 ' + _('Users online:') + '\n'
         if len(ts_users) == 0:
-            text = 'No hay nadie ahora mismo'
+            text = _('There is no one right now')
         else:
             for client in ts_users:
                 text += '%s\n' % client
@@ -226,10 +228,10 @@ def mention_toggle(group_id, user_id):
             mention = bool(cur.fetchone()[0])
             if not mention:
                 cur.execute("INSERT INTO TsMentions VALUES (%s, %s)", (str(group_id), str(user_id)))
-                return '✅ Menciones activadas'
+                return '✅ ' + _('Activated mentions')
             else:
                 cur.execute('DELETE FROM TsMentions WHERE Group_id = %s and User_id = %s', (str(group_id), str(user_id)))
-                return '❎ Menciones desactivadas'
+                return '❎ ' + _('Disabled mentions')
     except Exception:
         logger.error('Fatal error in mention_toggle', exc_info=True)
     finally:
@@ -289,7 +291,7 @@ def callback_query_handler(bot, update):
     if query_data.startswith('TS_UPDATE'):
         a = get_ts_view()
         if a == update.effective_message.text_markdown:
-            bot.answer_callback_query(update.callback_query.id, 'Sin cambios')
+            bot.answer_callback_query(update.callback_query.id, _('No changes'))
         else:
             ts_view(bot, update, message_id=update.effective_message.message_id, chat_id=update.effective_chat.id)
-            bot.answer_callback_query(update.callback_query.id, 'Actualizado correctamente')
+            bot.answer_callback_query(update.callback_query.id, _('Successfully updated'))

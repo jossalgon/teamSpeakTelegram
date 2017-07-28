@@ -1,0 +1,86 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: 2017-07-28 20:27+0200\n"
+"PO-Revision-Date: 2017-07-28 20:32+0200\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+"X-Generator: Poedit 1.8.7.1\n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: es\n"
+
+#: teamspeak.py:33
+msgid "Welcome %s you're now activated, using /who or /ts you can check who's in teamspeak."
+msgstr "Bienvenido %s ya estás activado, usando /who o /ts puedes comprobar quién hay en teamSpeak."
+
+#: teamspeak.py:36
+msgid "Hello %s, using /who or /ts you can check who's in teamspeak."
+msgstr "Hola %s, usando /who o /ts puedes comprobar quién hay en teamspeak."
+
+#: teamspeak.py:38
+msgid "Welcome, ask admin to generate an invitation link via /generate"
+msgstr "Bienvenido, pide al administrador que genere un enlace de invitación mediante /generate"
+
+#: utils.py:144 teamspeak.py:48
+msgid "You aren't allow to use this"
+msgstr "No se te permite usar esto"
+
+#: teamspeak.py:58
+msgid "Join"
+msgstr "Unirse"
+
+#: teamspeak.py:59
+msgid "Share link"
+msgstr "Compartir enlace"
+
+#: teamspeak.py:61
+msgid "Welcome to TeamSpeak bot"
+msgstr "Bienvenido al bot de TeamSpeak"
+
+#: teamspeak.py:62
+msgid "This is an invitation to use the TeamSpeak bot"
+msgstr "Esta es una invitación para usar el bot de TeamSpeak"
+
+#: teamspeak.py:70
+msgid "Use this command in the group where you want to activate/disable the notifications"
+msgstr "Usa este comando en el grupo donde desees activar/desactivar las notificaciones"
+
+#: teamspeak.py:98
+msgid "Sorry, I didn't understand that command."
+msgstr "Lo siento, no entiendo ese comando."
+
+#: utils.py:134
+msgid "Update"
+msgstr "Actualizar"
+
+#: utils.py:183
+msgid "Users online:"
+msgstr "Conectados:"
+
+#: utils.py:185
+msgid "There is no one right now"
+msgstr "No hay nadie ahora mismo"
+
+#: utils.py:231
+msgid "Activated mentions"
+msgstr "Menciones activadas"
+
+#: utils.py:234
+msgid "Disabled mentions"
+msgstr "Menciones desactivadas"
+
+#: utils.py:294
+msgid "No changes"
+msgstr "Sin cambios"
+
+#: utils.py:297
+msgid "Successfully updated"
+msgstr "Actualizado correctamente"

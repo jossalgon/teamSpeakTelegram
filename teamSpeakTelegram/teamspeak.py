@@ -7,7 +7,7 @@ from telegram.ext import Updater, CommandHandler, RegexHandler
 import logging
 import configparser
 
-from teamSpeakTelegram import utils
+from teamSpeakTelegram import utils, user_language, _
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -21,6 +21,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 
+@user_language
 def start(bot, update, args):
     message = update.message
     user = message.from_user
@@ -29,39 +30,44 @@ def start(bot, update, args):
         res = utils.validate_invitation_token(token=args[0], user_id=user.id, name=user.first_name)
 
     if res:
-        text = "Welcome %s you're now activated, using /who or /ts you can check who's in teamspeak." % user.first_name
+        text = _("Welcome %s you're now activated, using /who or /ts you can check who's in teamspeak.") % \
+               user.first_name
     elif utils.is_allow(user.id):
-        text = "Hello %s, using /who or /ts you can check who's in teamspeak." % user.first_name
+        text = _("Hello %s, using /who or /ts you can check who's in teamspeak.") % user.first_name
     else:
-        text = "Welcome, ask admin to generate an invitation link via /generate"
+        text = _("Welcome, ask admin to generate an invitation link via /generate")
     bot.sendMessage(message.chat_id, text, reply_to_message_id=message.message_id)
 
 
+@user_language
 def ts_stats(bot, update):
     message = update.message
     if utils.is_allow(message.from_user.id):
         stats = utils.ts_stats()
     else:
-        stats = "You aren't allow to use this"
+        stats = _("You aren't allow to use this")
     bot.send_message(message.chat.id, stats, reply_to_message_id=message.message_id)
 
 
+@user_language
 def generate_invitation(bot, update):
     message = update.message
     token = utils.generate_invitation()
     link = 'https://telegram.me/%s?start=%s' % (bot.username, token)
     share_link = 'https://telegram.me/share/url?url={0}&text=Click%20the%20link%20to%20join%20the%20teamspeak%20bot'.format(link)
-    keyboard = [[InlineKeyboardButton('Join', url=link)],
-                [InlineKeyboardButton('Share link', url=share_link)]]
+    keyboard = [[InlineKeyboardButton(_('Join'), url=link)],
+                [InlineKeyboardButton(_('Share link'), url=share_link)]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    bot.sendMessage(message.chat_id, '🎈 Welcome to TeamSpeak bot 🎈\n\nThis is an invitation to use the TeamSpeak bot',
+    bot.sendMessage(message.chat_id, '🎈 ' + _('Welcome to TeamSpeak bot') + ' 🎈\n\n' +
+                    _('This is an invitation to use the TeamSpeak bot'),
                     reply_markup=reply_markup)
 
 
+@user_language
 def mention_toggle(bot, update):
     message = update.message
     if message.chat.type == 'private':
-        text = 'Usa este comando en el grupo que quieras activar/desactivar las menciones'
+        text = _('Use this command in the group where you want to activate/disable the notifications')
     else:
         text = utils.mention_toggle(message.chat_id, message.from_user.id)
     bot.sendMessage(message.chat_id, text, reply_to_message_id=message.message_id)
@@ -87,8 +93,9 @@ def log_error(bot, update, error):
     logger.warning('Update "%s" caused error "%s"' % (update, error))
 
 
+@user_language
 def unknown(bot, update):
-    bot.sendMessage(chat_id=update.message.chat_id, text="Sorry, I didn't understand that command.")
+    bot.sendMessage(chat_id=update.message.chat_id, text=_("Sorry, I didn't understand that command."))
 
 
 def main():
@@ -110,7 +117,6 @@ def main():
     dp.add_handler(CommandHandler('id', get_id))
     dp.add_handler(RegexHandler(r'(?i).*\@flandas\b', utils.mention_forwarder))
     dp.add_handler(CallbackQueryHandler(utils.callback_query_handler))
-
 
     # log all errors
     dp.add_error_handler(log_error)
