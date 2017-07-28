@@ -8,8 +8,11 @@ from telegram.ext import Filters
 
 
 # Config the translations
-path = os.path.join(os.path.dirname(sys.modules['teamSpeakTelegram'].__file__), "locale")
-lang_es = gettext.translation("teamspeak", localedir=path, languages=["es"])
+try:
+    path = os.path.join(os.path.dirname(sys.modules['teamSpeakTelegram'].__file__), "locale")
+    lang_es = gettext.translation("teamspeak", localedir=path, languages=["es"])
+except OSError:
+    lang_es = gettext
 
 _lang = gettext.gettext
 
