@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import math
 import pymysql
 import ts3
 from ts3.examples.viewer import ChannelTreeNode
@@ -23,6 +24,8 @@ DB_NAME = config['Database']['DB_NAME']
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 logger = logging.getLogger(__name__)
+
+ADMIN_ID = config.getint('Telegram', 'admin_id') if config.has_option('Telegram', 'admin_id') else None
 
 
 def create_database():
@@ -286,6 +289,68 @@ def validate_invitation_token(token, user_id, name):
             con.close()
 
 
+def get_users_tsdb():
+    with ts3.query.TS3Connection(ts_host) as ts3conn:
+        try:
+            ts3conn.login(
+                client_login_name=ts_user,
+                client_login_password=ts_pass
+            )
+        except ts3.query.TS3QueryError as err:
+            print("Login failed:", err.resp.error["msg"])
+            exit(1)
+
+        ts3conn.use(sid=1)
+        users = ts3conn.clientdblist().parsed
+        return users
+
+
+def users_tsdb(bot, update, page=1):
+    message = update.effective_message
+    chat_id = message.chat_id
+    markup = []
+    users = get_users_tsdb()
+
+    # Pagination
+    pag_max = math.ceil(len(users) / 10)
+    pag_button = InlineKeyboardButton('Pag. %s/%s' % (str(page), str(pag_max)), callback_data='USER_NEXT')
+
+    start = int(len(users)/pag_max) * (page-1) - 1 if page > 1 else 0
+    end = start+10 if start+10 < len(users) else len(users)
+    for i in range(start, end, 2):
+        user1 = users[i]
+        row = [InlineKeyboardButton(user1['client_nickname'],
+                                    callback_data='USER_%s' % str(user1['cldbid']))]
+        if i+1 < len(users):
+            user2 = users[i+1]
+            row.append(InlineKeyboardButton(user2['client_nickname'],
+                                            callback_data='USER_%s' % str(user2['cldbid'])))
+        markup.append(row)
+
+    if len(users) >= 5:
+        if page == 0:
+            sig_button = InlineKeyboardButton('Pag. %s/%s ⏩' % (str(page), str(pag_max)),
+                                              callback_data='USER_PG%s' % (page+1))
+            markup.append([sig_button])
+
+        elif 0 < page < pag_max:
+            ant_button = InlineKeyboardButton(_('⏪ Ant'), callback_data='USER_PG%s' % (page-1))
+            sig_button = InlineKeyboardButton(_('⏩ Sig'), callback_data='USER_PG%s' % (page+1))
+            markup.append([ant_button, pag_button, sig_button])
+        elif page == pag_max:
+            ant_button = InlineKeyboardButton('Pag. %s/%s ⏪' % (str(page), str(pag_max)),
+                                              callback_data='USER_PG%s' % (page-1))
+            markup.append([ant_button])
+
+    reply_markup = InlineKeyboardMarkup(markup)
+    if page > 1 or message.edit_date:
+        bot.edit_message_reply_markup(chat_id=chat_id, message_id=message.message_id, reply_markup=reply_markup)
+    elif len(users) == 0:
+        bot.send_message(chat_id, _('No results'))
+    else:
+        bot.send_message(chat_id, _('Results:'), disable_notification=True, reply_markup=reply_markup)
+
+
 def callback_query_handler(bot, update):
     query_data = update.callback_query.data
     if query_data.startswith('TS_UPDATE'):
@@ -295,3 +360,10 @@ def callback_query_handler(bot, update):
         else:
             ts_view(bot, update, message_id=update.effective_message.message_id, chat_id=update.effective_chat.id)
             bot.answer_callback_query(update.callback_query.id, _('Successfully updated'))
+    elif query_data.startswith('USER'):
+        if update.effective_user.id != ADMIN_ID:
+            bot.answer_callback_query(update.callback_query.id, _('You must be admin'))
+        elif query_data.startswith('USER_PG'):
+            users_tsdb(bot, update, page=int(query_data.split('USER_PG')[1]))
+        else:
+            pass
