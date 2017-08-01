@@ -66,10 +66,12 @@ def generate_invitation(bot, update):
 @user_language
 def mention_toggle(bot, update):
     message = update.message
-    if message.chat.type == 'private':
+    if not utils.is_allow(message.from_user.id):
+        text = _("You aren't allow to use this")
+    elif message.chat.type == 'private':
         text = _('Use this command in the group where you want to activate/disable the notifications')
     else:
-        text = utils.mention_toggle(message.chat_id, message.from_user.id)
+        text = utils.mention_toggle(bot, update, message.chat_id, message.from_user.id)
     bot.sendMessage(message.chat_id, text, reply_to_message_id=message.message_id)
 
 
@@ -118,8 +120,6 @@ def main():
     dp.add_handler(RegexHandler(r'(?i).*\@flandas\b', utils.mention_forwarder))
     dp.add_handler(CallbackQueryHandler(utils.callback_query_handler, pass_chat_data=True))
     dp.add_handler(CommandHandler('users', utils.users_tsdb, Filters.user(user_id=ADMIN_ID), pass_chat_data=True))
-    # dp.add_handler(CommandHandler('pl', utils.get_permision_list))
-
 
     # log all errors
     dp.add_error_handler(log_error)

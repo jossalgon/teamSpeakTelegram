@@ -217,16 +217,18 @@ def get_mention_users_by_group(group_id):
 def mention_forwarder(bot, update):
     message = update.message
     group_id = message.chat_id
-    user_ids = get_mention_users_by_group(group_id)
-    for user_id in user_ids:
-        try:
-            bot.forward_message(user_id, group_id, message.message_id)
-        except:
-            pass
+
+    if is_allow(message.from_user.id):
+        user_ids = get_mention_users_by_group(group_id)
+        for user_id in user_ids:
+            try:
+                bot.forward_message(user_id, group_id, message.message_id)
+            except:
+                pass
 
 
 @user_language
-def mention_toggle(group_id, user_id):
+def mention_toggle(bot, update, group_id, user_id):
     con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
     try:
         with con.cursor() as cur:
