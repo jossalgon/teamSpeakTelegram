@@ -53,6 +53,13 @@ Command | Uses
 /generate | Generate an invitation link
 /id | Reply with your telegram id
 /notify | Send a message with the args received from the command to all the telegram users
+/users | Manage users with intuitive buttons
 
 
-![Example bot](http://imgur.com/lkx8Mqn.jpg)
+/user command                               |  User detail
+:------------------------------------------:|:-------------------------------------------:
+![TS command](http://imgur.com/giUiHUb.png) | ![TS command](http://imgur.com/uyjMQHz.png)
+
+/ts command                                 |
+:------------------------------------------:
+![TS command](http://imgur.com/KJ41dUK.png) |
