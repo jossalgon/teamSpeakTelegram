@@ -116,8 +116,10 @@ def main():
     dp.add_handler(CommandHandler('notify', notify, Filters.user(user_id=ADMIN_ID), pass_args=True))
     dp.add_handler(CommandHandler('id', get_id))
     dp.add_handler(RegexHandler(r'(?i).*\@flandas\b', utils.mention_forwarder))
-    dp.add_handler(CallbackQueryHandler(utils.callback_query_handler))
-    dp.add_handler(CommandHandler('users', utils.users_tsdb, Filters.user(user_id=ADMIN_ID)))
+    dp.add_handler(CallbackQueryHandler(utils.callback_query_handler, pass_chat_data=True))
+    dp.add_handler(CommandHandler('users', utils.users_tsdb, Filters.user(user_id=ADMIN_ID), pass_chat_data=True))
+    # dp.add_handler(CommandHandler('pl', utils.get_permision_list))
+
 
     # log all errors
     dp.add_error_handler(log_error)
