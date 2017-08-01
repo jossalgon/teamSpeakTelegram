@@ -25,7 +25,7 @@ def user_language(func):
     def wrapper(bot, update, *args, **kwargs):
         global _lang
 
-        if (Filters.language('es'))(update.message):
+        if update.effective_user.language_code.startswith('es'):
             # If language is es_ES, translates
             _lang = lang_es.gettext
         else:

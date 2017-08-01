@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2017-07-28 20:27+0200\n"
-"PO-Revision-Date: 2017-07-28 20:32+0200\n"
+"POT-Creation-Date: 2017-08-01 19:13+0200\n"
+"PO-Revision-Date: 2017-08-01 19:58+0200\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -16,6 +16,158 @@ msgstr ""
 "Last-Translator: \n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Language: es\n"
+
+#: utils.py:138
+msgid "Update"
+msgstr "Actualizar"
+
+#: teamspeak.py:48 utils.py:148
+msgid "You aren't allow to use this"
+msgstr "No se te permite usar esto\t"
+
+#: utils.py:187
+msgid "Users online:"
+msgstr "Conectados:"
+
+#: utils.py:189
+msgid "There is no one right now"
+msgstr "No hay nadie ahora mismo"
+
+#: utils.py:235
+msgid "Activated mentions"
+msgstr "Menciones activadas"
+
+#: utils.py:238
+msgid "Disabled mentions"
+msgstr "Menciones desactivadas"
+
+#: utils.py:387
+msgid "User banned successfully"
+msgstr "Usuario baneado correctamente"
+
+#: utils.py:405
+msgid "User unbanned successfully"
+msgstr "Usuario desbaneado correctamente"
+
+#: utils.py:429
+msgid "User kicked successfully"
+msgstr "Usuario kickeado correctamente"
+
+#: utils.py:431
+msgid "Something went wrong"
+msgstr "Algo fue mal"
+
+#: utils.py:445 utils.py:460 utils.py:469
+msgid "Page"
+msgstr "Pag."
+
+#: utils.py:465
+msgid "Prev"
+msgstr "Ant"
+
+#: utils.py:466
+msgid "Next"
+msgstr "Sig"
+
+#: utils.py:474
+msgid "*User list:*"
+msgstr "*Listado de usuarios:*"
+
+#: utils.py:474
+msgid "Here is a list of all your TeamSpeak users, pressing any of them                                            will take you to his detail."
+msgstr "Aquí se muestra un listado de todos sus usuarios de TeamSpeak, presione cualquiera para llevarle a sus detalles."
+
+#: utils.py:480
+msgid "No results"
+msgstr "Sin resultados"
+
+#: utils.py:500
+msgid "ID banned"
+msgstr "ID banneado"
+
+#: utils.py:500
+msgid "ID unbanned"
+msgstr "ID desbaneado"
+
+#: utils.py:505
+msgid "IP banned"
+msgstr "IP banneado"
+
+#: utils.py:505
+msgid "IP unbanned"
+msgstr "IP desbaneado"
+
+#: utils.py:512
+msgid "Name banned"
+msgstr "Nombre banneado"
+
+#: utils.py:512
+msgid "Name unbanned"
+msgstr "Nombre desbanneado"
+
+#: utils.py:517
+msgid "Channel kick"
+msgstr "Expulsar del canal"
+
+#: utils.py:518
+msgid "Server kick"
+msgstr "Expulsar del servidor"
+
+#: utils.py:521
+msgid "Back"
+msgstr "Atrás"
+
+#: utils.py:534
+msgid "ONLINE"
+msgstr "CONECTADO"
+
+#: utils.py:534
+msgid "since"
+msgstr "desde"
+
+#: utils.py:529
+msgid "*Name:*"
+msgstr "*Nombre:*"
+
+#: utils.py:529
+msgid "*User details:*"
+msgstr "*Detalles:*"
+
+#: utils.py:531
+msgid "*Last connection:*"
+msgstr "*Últ. conexión*"
+
+#: utils.py:532
+msgid "*Last IP:*"
+msgstr "*Última IP:*"
+
+#: utils.py:533
+msgid "*Client DB identifier:*"
+msgstr "*Identificador de BD:*"
+
+#: utils.py:534
+msgid "*Client Unique identifier:*"
+msgstr "*ID de usuario:*"
+
+#: utils.py:535
+msgid "*Date creation:*"
+msgstr "*Fecha de creación:*"
+
+#: utils.py:537
+msgid "*Total connections:*"
+msgstr "*Conexiones totales:*"
+
+#: utils.py:549
+msgid "No changes"
+msgstr "Sin cambios"
+
+#: utils.py:552
+msgid "Successfully updated"
+msgstr "Actualizado correctamente"
+
+#: utils.py:562
+msgid "You must be admin"
+msgstr "Debes ser administrador"
 
 #: teamspeak.py:33
 msgid "Welcome %s you're now activated, using /who or /ts you can check who's in teamspeak."
@@ -28,10 +180,6 @@ msgstr "Hola %s, usando /who o /ts puedes comprobar quién hay en teamspeak."
 #: teamspeak.py:38
 msgid "Welcome, ask admin to generate an invitation link via /generate"
 msgstr "Bienvenido, pide al administrador que genere un enlace de invitación mediante /generate"
-
-#: utils.py:144 teamspeak.py:48
-msgid "You aren't allow to use this"
-msgstr "No se te permite usar esto"
 
 #: teamspeak.py:58
 msgid "Join"
@@ -56,31 +204,3 @@ msgstr "Usa este comando en el grupo donde desees activar/desactivar las notific
 #: teamspeak.py:98
 msgid "Sorry, I didn't understand that command."
 msgstr "Lo siento, no entiendo ese comando."
-
-#: utils.py:134
-msgid "Update"
-msgstr "Actualizar"
-
-#: utils.py:183
-msgid "Users online:"
-msgstr "Conectados:"
-
-#: utils.py:185
-msgid "There is no one right now"
-msgstr "No hay nadie ahora mismo"
-
-#: utils.py:231
-msgid "Activated mentions"
-msgstr "Menciones activadas"
-
-#: utils.py:234
-msgid "Disabled mentions"
-msgstr "Menciones desactivadas"
-
-#: utils.py:294
-msgid "No changes"
-msgstr "Sin cambios"
-
-#: utils.py:297
-msgid "Successfully updated"
-msgstr "Actualizado correctamente"

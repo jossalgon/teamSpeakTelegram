@@ -43,7 +43,7 @@ def start(bot, update, args):
 def ts_stats(bot, update):
     message = update.message
     if utils.is_allow(message.from_user.id):
-        stats = utils.ts_stats()
+        stats = utils.ts_stats(bot, update)
     else:
         stats = _("You aren't allow to use this")
     bot.send_message(message.chat.id, stats, reply_to_message_id=message.message_id)

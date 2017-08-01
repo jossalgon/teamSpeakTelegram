@@ -10,7 +10,7 @@ import logging
 import uuid
 from datetime import datetime
 
-from teamSpeakTelegram import _
+from teamSpeakTelegram import user_language, _
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -130,6 +130,7 @@ def ts_connect():
     return clients
 
 
+@user_language
 def ts_view(bot, update, message_id=None, chat_id=None):
     message = update.message
     if is_allow(update.effective_user.id):
@@ -181,7 +182,8 @@ def channel_tree_to_str(channel_tree, indent=0):
     return res
 
 
-def ts_stats():
+@user_language
+def ts_stats(bot, update):
     try:
         ts_users = ts_connect()
         text = '👁‍🗨 ' + _('Users online:') + '\n'
@@ -223,6 +225,7 @@ def mention_forwarder(bot, update):
             pass
 
 
+@user_language
 def mention_toggle(group_id, user_id):
     con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
     try:
@@ -364,6 +367,7 @@ def get_user_clid(cluid):
             pass
 
 
+@user_language
 def ban_ts_user(bot, update, chat_data, cldbid, ban_type):
     user = get_user_ts_info(cldbid)
     with ts3.query.TS3Connection(ts_host) as ts3conn:
@@ -388,6 +392,7 @@ def ban_ts_user(bot, update, chat_data, cldbid, ban_type):
     details_user_ts(bot, update, chat_data, cldbid=int(cldbid))
 
 
+@user_language
 def unban_ts_user(bot, update, chat_data, cldbid, banid):
     with ts3.query.TS3Connection(ts_host) as ts3conn:
         try:
@@ -409,6 +414,7 @@ def unban_ts_user(bot, update, chat_data, cldbid, banid):
             users_tsdb(bot, update, chat_data)
 
 
+@user_language
 def kick_ts_user(bot, update, cldbid, kick_type):
     with ts3.query.TS3Connection(ts_host) as ts3conn:
         try:
@@ -431,6 +437,7 @@ def kick_ts_user(bot, update, cldbid, kick_type):
             bot.answer_callback_query(update.callback_query.id, _('Something went wrong'))
 
 
+@user_language
 def users_tsdb(bot, update, chat_data):
     message = update.effective_message
     chat_id = message.chat_id
@@ -442,7 +449,7 @@ def users_tsdb(bot, update, chat_data):
     page = chat_data[message.message_id]['pages'] if not first_message else 1
 
     pag_max = math.ceil(len(users) / 10)
-    pag_button = InlineKeyboardButton(_('Pag.') + ' %s/%s' % (str(page), str(pag_max)), callback_data='USER_PG_NEXT')
+    pag_button = InlineKeyboardButton(_('Page') + ' %s/%s' % (str(page), str(pag_max)), callback_data='USER_PG_NEXT')
 
     start = int(len(users)/pag_max) * (page-1) - 1 if page > 1 else 0
     end = start+10 if start+10 < len(users) else len(users)
@@ -457,13 +464,13 @@ def users_tsdb(bot, update, chat_data):
 
     if len(users) >= 5:
         if page == 1:
-            sig_button = InlineKeyboardButton(_('Pag.') + ' %s/%s ⏩' % (str(page), str(pag_max)),
+            sig_button = InlineKeyboardButton(_('Page') + ' %s/%s ⏩' % (str(page), str(pag_max)),
                                               callback_data='USER_PG_NEXT')
             markup.append([sig_button])
 
         elif 1 < page < pag_max:
-            ant_button = InlineKeyboardButton('⏪ ' + _('Ant'), callback_data='USER_PG_PREV')
-            sig_button = InlineKeyboardButton('⏩ ' + _('Sig'), callback_data='USER_PG_NEXT')
+            ant_button = InlineKeyboardButton('⏪ ' + _('Prev'), callback_data='USER_PG_PREV')
+            sig_button = InlineKeyboardButton('⏩ ' + _('Next'), callback_data='USER_PG_NEXT')
             markup.append([ant_button, pag_button, sig_button])
         elif page == pag_max:
             ant_button = InlineKeyboardButton(_('Pag.') + ' %s/%s ⏪' % (str(page), str(pag_max)),
@@ -471,7 +478,7 @@ def users_tsdb(bot, update, chat_data):
             markup.append([ant_button])
 
     reply_markup = InlineKeyboardMarkup(markup)
-    text = '🎙 ' + _('*User list:*') + '\n' + _('Here is a list of all your TeamSpeak users, pressing any of them \
+    text = '🎙 ' + _('*User list:*') + '\n\n' + _('Here is a list of all your TeamSpeak users, pressing any of them \
                                            will take you to his detail.')
     if not first_message:
         bot.edit_message_text(text, chat_id=chat_id, message_id=message.message_id, reply_markup=reply_markup,
@@ -485,6 +492,7 @@ def users_tsdb(bot, update, chat_data):
         chat_data[msg.message_id]['pages'] = page
 
 
+@user_language
 def details_user_ts(bot, update, chat_data, cldbid):
     message = update.effective_message
     chat_id = message.chat_id
@@ -523,7 +531,7 @@ def details_user_ts(bot, update, chat_data, cldbid):
     reply_markup = InlineKeyboardMarkup(markup)
     connected = ' 👁‍🗨' if user_clid else ''
     last_connection = datetime.fromtimestamp(int(user['client_lastconnected'])).strftime('%d/%m/%Y %H:%M:%S')
-    last_connection_text = last_connection if connected == '' else '_ONLINE_ ' + ' since ' + last_connection
+    last_connection_text = last_connection if connected == '' else _('ONLINE') + ' ' + _('since') + ' ' + last_connection
     alias = '\n*Alias:* ' + get_name(cldbid) if get_name(cldbid) is not None else ''
 
     text = '🔎 ' + _('*User details:*') + '\n' + '\n' + _('*Name:*') + ' ' + user['client_nickname'] + connected \
@@ -540,6 +548,7 @@ def details_user_ts(bot, update, chat_data, cldbid):
                           parse_mode='Markdown')
 
 
+@user_language
 def callback_query_handler(bot, update, chat_data):
     query_data = update.callback_query.data
     message = update.effective_message
