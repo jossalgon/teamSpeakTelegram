@@ -453,7 +453,7 @@ def users_tsdb(bot, update, chat_data):
     pag_max = math.ceil(len(users) / 10)
     pag_button = InlineKeyboardButton(_('Page') + ' %s/%s' % (str(page), str(pag_max)), callback_data='USER_PG_NEXT')
 
-    start = int(len(users)/pag_max) * (page-1) - 1 if page > 1 else 0
+    start = 10 * (page-1) if page > 1 else 0
     end = start+10 if start+10 < len(users) else len(users)
     for i in range(start, end, 2):
         user1 = users[i]
