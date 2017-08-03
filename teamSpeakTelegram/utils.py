@@ -2,6 +2,8 @@
 import math
 import pymysql
 import ts3
+from telegram import ForceReply
+from telegram import TelegramError
 from ts3.examples.viewer import ChannelTreeNode
 from telegram import InlineKeyboardButton
 from telegram import InlineKeyboardMarkup
@@ -92,7 +94,7 @@ def get_user_ids():
     con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
     try:
         with con.cursor() as cur:
-            cur.execute("SELECT Telegram_id FROM TsUsers")
+            cur.execute("SELECT Telegram_id FROM TsUsers WHERE Telegram_id != 0")
             res = [user_id[0] for user_id in cur.fetchall()]
     except Exception as exception:
         print(str(exception))
@@ -249,11 +251,11 @@ def mention_toggle(bot, update, group_id, user_id):
             con.close()
 
 
-def add_user(user_id, name):
+def add_user(user_id, name, ts_id=0):
     con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
     try:
         with con.cursor() as cur:
-            cur.execute("INSERT INTO TsUsers Values(%s, %s, 0)", (str(user_id), str(name)))
+            cur.execute("INSERT INTO TsUsers Values(%s, %s, %s)", (str(user_id), str(name), str(ts_id)))
     except Exception:
         logger.error('Fatal error in add_user', exc_info=True)
     finally:
@@ -289,6 +291,26 @@ def validate_invitation_token(token, user_id, name):
                 return True
     except Exception:
         logger.error('Fatal error in mention_toggle', exc_info=True)
+    finally:
+        if con:
+            con.commit()
+            con.close()
+
+
+def assign_name_tsid(telegram_id, name, ts_id):
+    con = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
+    try:
+        with con.cursor() as cur:
+            if int(telegram_id) != 0:
+                cur.execute("UPDATE TsUsers SET Name=%s, Ts_id=%s WHERE Telegram_id=%s",
+                            (str(name), str(ts_id), str(telegram_id)))
+                cur.execute("DELETE FROM TsUsers WHERE Telegram_id=0 AND Ts_id=%s", (str(ts_id),))
+            else:
+                cur.execute("UPDATE TsUsers SET Name=%s, Telegram_id=%s WHERE Ts_id=%s",
+                            (str(name), str(telegram_id), str(ts_id)))
+            return True
+    except Exception:
+        logger.error('Fatal error in assign_tsid', exc_info=True)
     finally:
         if con:
             con.commit()
@@ -440,6 +462,115 @@ def kick_ts_user(bot, update, cldbid, kick_type):
 
 
 @user_language
+def markup_append_pagination(bot, update, items, markup, page, callback):
+    pag_max = math.ceil(len(items) / 10)
+    pag_button = InlineKeyboardButton(_('Page') + ' %s/%s' % (str(page), str(pag_max)),
+                                      callback_data='%s_PG_NEXT' % callback)
+
+    if len(items) >= 5:
+        if page == 1:
+            sig_button = InlineKeyboardButton(_('Page') + ' %s/%s ⏩' % (str(page), str(pag_max)),
+                                              callback_data='%s_PG_NEXT' % callback)
+            markup.append([sig_button])
+
+        elif 1 < page < pag_max:
+            ant_button = InlineKeyboardButton('⏪ ' + _('Prev'), callback_data='%s_PG_PREV' % callback)
+            sig_button = InlineKeyboardButton('⏩ ' + _('Next'), callback_data='%s_PG_NEXT' % callback)
+            markup.append([ant_button, pag_button, sig_button])
+        elif page == pag_max:
+            ant_button = InlineKeyboardButton(_('Page') + ' %s/%s ⏪' % (str(page), str(pag_max)),
+                                              callback_data='%s_PG_PREV' % callback)
+            markup.append([ant_button])
+
+    return markup
+
+
+@user_language
+def assign_user_alias_step1(bot, update, chat_data, cldbid):
+    chat_id = update.effective_chat.id
+    text = '🙍‍♂️ ' + _('Ok, give me an *alias* for that user')
+    message_sent = bot.send_message(chat_id, text, reply_markup=ForceReply(), parse_mode='Markdown')
+
+    if 'alias_cldbid' not in chat_data:
+        chat_data['alias_cldbid'] = dict()
+    chat_data['alias_cldbid'][str(message_sent.message_id)] = '', cldbid
+    chat_data['bot_update'] = bot, update
+
+
+@user_language
+def assign_user_alias_step2(bot, update, chat_data):
+    message = update.effective_message
+    chat_id = update.effective_chat.id
+    markup = []
+
+    first_message = bool(update.message)
+    page = chat_data[message.message_id]['pages'] if not first_message else 1
+
+    user_ids = get_user_ids()
+
+    start = 10 * (page - 1) if page > 1 else 0
+    end = start + 10 if start + 10 < len(user_ids) else len(user_ids)
+    for i in range(start, end, 2):
+        j = i + 1
+        try:
+            user1 = bot.get_chat_member(chat_id=user_ids[i], user_id=user_ids[i]).user
+            username1 = '@' + user1.username if user1.username else user1.first_name
+        except TelegramError:
+            username1 = 'ID: ' + str(user_ids[i])
+        row = [InlineKeyboardButton(username1, callback_data='USER_ALIAS_%s' % str(user_ids[i]))]
+        if j < len(user_ids):
+            try:
+                user2 = bot.get_chat_member(chat_id=user_ids[j], user_id=user_ids[j]).user
+                username2 = '@' + user2.username if user2.username else user2.first_name
+            except TelegramError:
+                username2 = 'ID: ' + str(user_ids[j])
+            row.append(InlineKeyboardButton(username2, callback_data='USER_ALIAS_%s' % str(user_ids[j])))
+        markup.append(row)
+
+    markup = markup_append_pagination(bot, update, user_ids, markup, page, 'USER_ALIAS')
+    markup.append([InlineKeyboardButton('🔜 ' + _('Skip'), callback_data='USER_ALIAS_%s' % str(0))])
+
+    reply_markup = InlineKeyboardMarkup(markup)
+    text = '👍 ' + _('Ok, is this user on Telegram?')
+
+    if not first_message:
+        msg = bot.edit_message_text(text, chat_id=chat_id, message_id=message.message_id, reply_markup=reply_markup,
+                                    parse_mode='Markdown')
+    elif len(user_ids) == 0:
+        msg = bot.send_message(chat_id, _('No results'))
+    else:
+        msg = bot.send_message(chat_id, text, disable_notification=True, reply_markup=reply_markup,
+                               parse_mode='Markdown')
+        chat_data[msg.message_id] = dict()
+        chat_data[msg.message_id]['pages'] = page
+
+    if message.reply_to_message:
+        cldbid = chat_data['alias_cldbid'][str(message.reply_to_message.message_id)][1]
+        del chat_data['alias_cldbid'][str(message.reply_to_message.message_id)]
+        bot.delete_message(chat_id=chat_id, message_id=message.reply_to_message.message_id)
+        chat_data['alias_cldbid'][str(msg.message_id)] = message.text, cldbid
+
+
+@user_language
+def assign_user_alias_step3(bot, update, chat_data, telegram_id):
+    message = update.effective_message
+    alias, cldbid = chat_data['alias_cldbid'][str(message.message_id)]
+
+    skip = bool(int(telegram_id) == 0)
+    if skip:
+        add_user(telegram_id, alias, cldbid)
+    else:
+        assign_name_tsid(telegram_id, name=alias, ts_id=cldbid)
+
+    bot.delete_message(chat_id=message.chat_id, message_id=message.message_id)
+    bot.answer_callback_query(update.callback_query.id, _('Alias assigned successfully'), show_alert=True)
+
+    menu_bot, menu_update = chat_data['bot_update']
+    del chat_data['bot_update']
+    users_tsdb(menu_bot, menu_update, chat_data)
+
+
+@user_language
 def users_tsdb(bot, update, chat_data):
     message = update.effective_message
     chat_id = message.chat_id
@@ -449,9 +580,6 @@ def users_tsdb(bot, update, chat_data):
     first_message = bool(update.message)
 
     page = chat_data[message.message_id]['pages'] if not first_message else 1
-
-    pag_max = math.ceil(len(users) / 10)
-    pag_button = InlineKeyboardButton(_('Page') + ' %s/%s' % (str(page), str(pag_max)), callback_data='USER_PG_NEXT')
 
     start = 10 * (page-1) if page > 1 else 0
     end = start+10 if start+10 < len(users) else len(users)
@@ -464,20 +592,7 @@ def users_tsdb(bot, update, chat_data):
                                             callback_data='USER_DETAIL_%s' % str(user2['cldbid'])))
         markup.append(row)
 
-    if len(users) >= 5:
-        if page == 1:
-            sig_button = InlineKeyboardButton(_('Page') + ' %s/%s ⏩' % (str(page), str(pag_max)),
-                                              callback_data='USER_PG_NEXT')
-            markup.append([sig_button])
-
-        elif 1 < page < pag_max:
-            ant_button = InlineKeyboardButton('⏪ ' + _('Prev'), callback_data='USER_PG_PREV')
-            sig_button = InlineKeyboardButton('⏩ ' + _('Next'), callback_data='USER_PG_NEXT')
-            markup.append([ant_button, pag_button, sig_button])
-        elif page == pag_max:
-            ant_button = InlineKeyboardButton(_('Pag.') + ' %s/%s ⏪' % (str(page), str(pag_max)),
-                                              callback_data='USER_PG_PREV')
-            markup.append([ant_button])
+    markup = markup_append_pagination(bot, update, users, markup, page, 'USER')
 
     reply_markup = InlineKeyboardMarkup(markup)
     text = '🎙 ' + _('*User list:*') + '\n\n' + _('Here is a list of all your TeamSpeak users, pressing any of them \
@@ -502,10 +617,6 @@ def details_user_ts(bot, update, chat_data, cldbid):
     user_clid = get_user_clid(user['client_unique_identifier'])
     markup = list()
 
-    if message.message_id not in chat_data:
-        chat_data[message.message_id] = dict()
-    chat_data[message.message_id]['cldbid'] = cldbid
-
     banid = check_user_banned(uid=user['client_unique_identifier'])
     text = ('🚫 ' + _('ID banned')) if banid else ('✅ ' + _('ID unbanned'))
     action = 'USER_BAN_ID_%s' % cldbid if not banid else 'USER_UNBAN_%s_%s' % (cldbid, banid[0])
@@ -528,6 +639,7 @@ def details_user_ts(bot, update, chat_data, cldbid):
         server_kick = InlineKeyboardButton(_('Server kick'), callback_data='USER_KICK_%s_5' % cldbid)
         markup.append([channel_kick, server_kick])
 
+    markup.append([InlineKeyboardButton('🙍‍♂️ ' + _('Assign alias'), callback_data='USER_ALIAS_PRE_%s' % cldbid)])
     markup.append([InlineKeyboardButton(_('Back'), callback_data='USER_BACK')])
 
     reply_markup = InlineKeyboardMarkup(markup)
@@ -596,6 +708,17 @@ def callback_query_handler(bot, update, chat_data):
         elif query_data.startswith('USER_KICK'):
             uid, kick_type = query_data.split("USER_KICK_")[1].split("_")
             kick_ts_user(bot, update, int(uid), int(kick_type))
+
+        elif query_data.startswith('USER_ALIAS'):
+            if query_data.startswith('USER_ALIAS_PRE'):
+                cldbid = query_data.split("USER_ALIAS_PRE_")[1]
+                assign_user_alias_step1(bot, update, chat_data, cldbid)
+            elif query_data.startswith('USER_ALIAS_PG'):
+                chat_data[message.message_id]['pages'] += 1 if query_data.startswith('USER_ALIAS_PG_NEXT') else -1
+                assign_user_alias_step2(bot, update, chat_data)
+            elif query_data.startswith('USER_ALIAS'):
+                telegram_id = query_data.split("USER_ALIAS_")[1]
+                assign_user_alias_step3(bot, update, chat_data, telegram_id)
 
         elif query_data.startswith('USER_BACK'):
             users_tsdb(bot, update, chat_data)
