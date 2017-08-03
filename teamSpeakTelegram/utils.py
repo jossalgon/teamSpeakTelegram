@@ -178,8 +178,9 @@ def channel_tree_to_str(channel_tree, indent=0):
             if client["client_type"] == "1":
                 continue
             alias = get_name(client["client_database_id"])
-            nickname = alias if alias is not None else client["client_nickname"]
-            res += "\n" + " " * (indent * 3 + 3) + "🔘 *" + nickname + "*"
+            nickname = ('*' + client["client_nickname"] + '* (' + get_name(client["client_database_id"]) + ')') \
+                if alias is not None else client["client_nickname"]
+            res += "\n" + " " * (indent * 3 + 3) + "🔘" + nickname + ""
     for child in channel_tree.childs:
         if len(child.clients) > 0:
             res += channel_tree_to_str(child, indent=indent + 1)
