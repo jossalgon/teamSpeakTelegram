@@ -307,7 +307,7 @@ def get_users_tsdb():
             exit(1)
 
         ts3conn.use(sid=1)
-        users = ts3conn.clientdblist().parsed
+        users = ts3conn.clientdblist(duration=100000000*999).parsed
         return users
 
 
