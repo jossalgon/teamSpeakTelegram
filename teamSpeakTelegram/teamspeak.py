@@ -101,6 +101,7 @@ def filter_assign_alias(msg):
            msg.reply_to_message.from_user.id == msg.bot.id and \
            msg.reply_to_message.text_markdown.startswith('🙍‍♂️')
 
+
 @user_language
 def unknown(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id, text=_("Sorry, I didn't understand that command."))
@@ -127,6 +128,9 @@ def main():
     dp.add_handler(CallbackQueryHandler(utils.callback_query_handler, pass_chat_data=True))
     dp.add_handler(CommandHandler('users', utils.users_tsdb, Filters.user(user_id=ADMIN_ID), pass_chat_data=True))
     dp.add_handler(MessageHandler(filter_assign_alias, utils.assign_user_alias_step2, pass_chat_data=True))
+
+    # Add response for unknown private messages
+    dp.add_handler(MessageHandler(Filters.private, unknown))
 
     # log all errors
     dp.add_error_handler(log_error)
