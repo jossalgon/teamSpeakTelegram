@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2017-08-03 21:50+0200\n"
-"PO-Revision-Date: 2017-08-03 21:54+0200\n"
+"POT-Creation-Date: 2017-08-12 15:03+0200\n"
+"PO-Revision-Date: 2017-08-12 15:17+0200\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -17,181 +17,258 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Language: es\n"
 
-#: utils.py:141
+#: utils.py:143
 msgid "Update"
 msgstr "Actualizar"
 
-#: teamspeak.py:49 teamspeak.py:71 utils.py:151
+#: utils.py:153 teamspeak.py:49 teamspeak.py:71
 msgid "You aren't allow to use this"
 msgstr "No se te permite usar esto\t"
 
-#: utils.py:191
+#: utils.py:196
 msgid "Users online:"
 msgstr "Conectados:"
 
-#: utils.py:193
+#: utils.py:198
 msgid "There is no one right now"
 msgstr "No hay nadie ahora mismo"
 
-#: utils.py:242
+#: utils.py:247
 msgid "Activated mentions"
 msgstr "Menciones activadas"
 
-#: utils.py:245
+#: utils.py:250
 msgid "Disabled mentions"
 msgstr "Menciones desactivadas"
 
-#: utils.py:415
+#: utils.py:491
 msgid "User banned successfully"
 msgstr "Usuario baneado correctamente"
 
-#: utils.py:434
+#: utils.py:510
 msgid "User unbanned successfully"
 msgstr "Usuario desbaneado correctamente"
 
-#: utils.py:459
+#: utils.py:535
 msgid "User kicked successfully"
 msgstr "Usuario kickeado correctamente"
 
-#: utils.py:461
+#: utils.py:537
 msgid "Something went wrong"
 msgstr "Algo fue mal"
 
-#: utils.py:467 utils.py:472 utils.py:481
+#: utils.py:555
+msgid "User added successfully"
+msgstr "Usuario añadido correctamente"
+
+#: utils.py:576
+msgid "User deleted from group successfully"
+msgstr "Usuario eliminado del grupo correctamente"
+
+#: utils.py:585 utils.py:590 utils.py:599
 msgid "Page"
 msgstr "Pág."
 
-#: utils.py:477
+#: utils.py:595
 msgid "Prev"
 msgstr "Ant"
 
-#: utils.py:478
+#: utils.py:596
 msgid "Next"
 msgstr "Sig"
 
-#: utils.py:491
-msgid "Ok, give me an *alias* for that user"
-msgstr "Ok, dame un *alias* para ese usuario"
-
-#: utils.py:531
-msgid "Skip"
-msgstr "Saltar"
-
-#: utils.py:534
-msgid "Ok, is this user on Telegram?"
-msgstr "Ok, ¿está este usuario en Telegram?"
-
-#: utils.py:540 utils.py:604
+#: utils.py:635 utils.py:698
 msgid "No results"
 msgstr "Sin resultados"
 
-#: utils.py:566
+#: utils.py:649
+msgid "Ok, give me an *alias* for that user"
+msgstr "Ok, dame un *alias* para ese usuario"
+
+#: utils.py:689
+msgid "Skip"
+msgstr "Saltar"
+
+#: utils.py:692
+msgid "Ok, is this user on Telegram?"
+msgstr "Ok, ¿está este usuario en Telegram?"
+
+#: utils.py:724
 msgid "Alias assigned successfully"
 msgstr "Alias asignado correctamente"
 
-#: utils.py:598
-msgid "*User list:*"
-msgstr "*Listado de usuarios:*"
+#: utils.py:733 utils.py:742
+msgid "*Group list:*"
+msgstr "*Listado de grupos:*"
 
-#: utils.py:598
-msgid "Here is a list of all your TeamSpeak users, pressing any of them                                            will take you to his detail."
-msgstr "Aquí se muestra un listado de todos sus usuarios de TeamSpeak, presione cualquiera para llevarle a sus detalles."
+#: utils.py:734
+msgid ""
+"Here is a list of your TeamSpeak groups, pressing any of them will take you to his detail."
+msgstr ""
+"Aquí se muestra un listado de sus grupos de TeamSpeak, presione cualquiera para llevarle "
+"a sus detalles."
 
-#: utils.py:621
-msgid "ID banned"
-msgstr "ID banneado"
+#: utils.py:743
+msgid ""
+"Here is the TeamSpeak group list of this user, pressing any of them will take you to his "
+"detail."
+msgstr ""
+"Aquí se muestra un listado de los grupos de TeamSpeak de este usuario, presione "
+"cualquiera para llevarle a sus detalles."
 
-#: utils.py:621
-msgid "ID unbanned"
-msgstr "ID desbaneado"
-
-#: utils.py:626
-msgid "IP banned"
-msgstr "IP banneado"
-
-#: utils.py:626
-msgid "IP unbanned"
-msgstr "IP desbaneado"
-
-#: utils.py:633
-msgid "Name banned"
-msgstr "Nombre banneado"
-
-#: utils.py:633
-msgid "Name unbanned"
-msgstr "Nombre desbanneado"
-
-#: utils.py:638
-msgid "Channel kick"
-msgstr "Expulsar del canal"
-
-#: utils.py:639
-msgid "Server kick"
-msgstr "Expulsar del servidor"
-
-#: utils.py:642
-msgid "Assign alias"
-msgstr "Asignar alias"
-
-#: utils.py:643
+#: utils.py:745 utils.py:774 utils.py:795 utils.py:816 utils.py:836 utils.py:886
 msgid "Back"
 msgstr "Atrás"
 
-#: utils.py:648
+#: utils.py:767
+msgid "Access to default group is forbidden"
+msgstr "Acceso a grupos por defecto restringido"
+
+#: utils.py:770
+msgid "group:"
+msgstr "grupo:"
+
+#: utils.py:771
+msgid "List users"
+msgstr "Listar usuarios"
+
+#: utils.py:772
+msgid "Add user"
+msgstr "Añadir usuario"
+
+#: utils.py:773
+msgid "Delete user"
+msgstr "Eliminar usuario"
+
+#: utils.py:785
+msgid "*Group users:*"
+msgstr "*Usuarios del grupo:*"
+
+#: utils.py:786
+msgid ""
+"Here is a list of all users in this group, pressing any of them will take you to his "
+"detail."
+msgstr ""
+"Aquí se muestra un listado de todos los usuarios en este grupo, presione cualquiera para "
+"llevarle a sus detalles."
+
+#: utils.py:806
+msgid "*Select an user to add to the group:*"
+msgstr "*Seleccione un usuario para añadir al grupo:*"
+
+#: utils.py:826
+msgid "*Select an user to delete from group:*"
+msgstr "*Seleccione un usuario para eliminar del grupo:*"
+
+#: utils.py:845
+msgid "*User list:*"
+msgstr "*Listado de usuarios:*"
+
+#: utils.py:846
+msgid ""
+"Here is a list of all your TeamSpeak users, pressing any of them will take you to his "
+"detail."
+msgstr ""
+"Aquí se muestra un listado de todos sus usuarios de TeamSpeak, presione cualquiera para "
+"llevarle a sus detalles."
+
+#: utils.py:863
+msgid "ID banned"
+msgstr "ID banneado"
+
+#: utils.py:863
+msgid "ID unbanned"
+msgstr "ID desbaneado"
+
+#: utils.py:868
+msgid "IP banned"
+msgstr "IP banneado"
+
+#: utils.py:868
+msgid "IP unbanned"
+msgstr "IP desbaneado"
+
+#: utils.py:875
+msgid "Name banned"
+msgstr "Nombre banneado"
+
+#: utils.py:875
+msgid "Name unbanned"
+msgstr "Nombre desbanneado"
+
+#: utils.py:880
+msgid "Channel kick"
+msgstr "Expulsar del canal"
+
+#: utils.py:881
+msgid "Server kick"
+msgstr "Expulsar del servidor"
+
+#: utils.py:884
+msgid "Assign alias"
+msgstr "Asignar alias"
+
+#: utils.py:885
+msgid "Groups"
+msgstr "Grupos"
+
+#: utils.py:891
 msgid "ONLINE"
 msgstr "CONECTADO"
 
-#: utils.py:648
+#: utils.py:891
 msgid "since"
 msgstr "desde"
 
-#: utils.py:651
+#: utils.py:894
 msgid "*Name:*"
 msgstr "*Nombre:*"
 
-#: utils.py:651
+#: utils.py:894
 msgid "*User details:*"
 msgstr "*Detalles:*"
 
-#: utils.py:653
+#: utils.py:896
 msgid "*Last connection:*"
 msgstr "*Últ. conexión*"
 
-#: utils.py:654
+#: utils.py:897
 msgid "*Last IP:*"
 msgstr "*Última IP:*"
 
-#: utils.py:655
+#: utils.py:898
 msgid "*Client DB identifier:*"
 msgstr "*Identificador de BD:*"
 
-#: utils.py:656
+#: utils.py:899
 msgid "*Client Unique identifier:*"
 msgstr "*ID de usuario:*"
 
-#: utils.py:657
+#: utils.py:900
 msgid "*Date creation:*"
 msgstr "*Fecha de creación:*"
 
-#: utils.py:659
+#: utils.py:902
 msgid "*Total connections:*"
 msgstr "*Conexiones totales:*"
 
-#: utils.py:672
+#: utils.py:922
 msgid "No changes"
 msgstr "Sin cambios"
 
-#: utils.py:675
+#: utils.py:925
 msgid "Successfully updated"
 msgstr "Actualizado correctamente"
 
-#: utils.py:685
+#: utils.py:928
 msgid "You must be admin"
 msgstr "Debes ser administrador"
 
 #: teamspeak.py:34
 msgid "Welcome %s you're now activated, using /who or /ts you can check who's in teamspeak."
-msgstr "Bienvenido %s ya estás activado, usando /who o /ts puedes comprobar quién hay en teamSpeak."
+msgstr ""
+"Bienvenido %s ya estás activado, usando /who o /ts puedes comprobar quién hay en "
+"teamSpeak."
 
 #: teamspeak.py:37
 msgid "Hello %s, using /who or /ts you can check who's in teamspeak."
@@ -199,7 +276,8 @@ msgstr "Hola %s, usando /who o /ts puedes comprobar quién hay en teamspeak."
 
 #: teamspeak.py:39
 msgid "Welcome, ask admin to generate an invitation link via /generate"
-msgstr "Bienvenido, pide al administrador que genere un enlace de invitación mediante /generate"
+msgstr ""
+"Bienvenido, pide al administrador que genere un enlace de invitación mediante /generate"
 
 #: teamspeak.py:59
 msgid "Join"
@@ -221,6 +299,6 @@ msgstr "Esta es una invitación para usar el bot de TeamSpeak"
 msgid "Use this command in the group where you want to activate/disable the notifications"
 msgstr "Usa este comando en el grupo donde desees activar/desactivar las notificaciones"
 
-#: teamspeak.py:106
+#: teamspeak.py:107
 msgid "Sorry, I didn't understand that command."
 msgstr "Lo siento, no entiendo ese comando."

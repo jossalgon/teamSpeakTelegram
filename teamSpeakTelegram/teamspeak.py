@@ -127,6 +127,7 @@ def main():
     dp.add_handler(RegexHandler(r'(?i).*\@flandas\b', utils.mention_forwarder))
     dp.add_handler(CallbackQueryHandler(utils.callback_query_handler, pass_chat_data=True))
     dp.add_handler(CommandHandler('users', utils.send_users_tsdb, Filters.user(user_id=ADMIN_ID), pass_chat_data=True))
+    dp.add_handler(CommandHandler('groups', utils.send_ts_groups, Filters.user(user_id=ADMIN_ID), pass_chat_data=True))
     dp.add_handler(MessageHandler(filter_assign_alias, utils.assign_user_alias_step2, pass_chat_data=True))
 
     # Add response for unknown private messages

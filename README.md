@@ -54,6 +54,7 @@ Command | Uses
 /id | Reply with your telegram id
 /notify | Send a message with the args received from the command to all the telegram users
 /users | Manage users with intuitive buttons
+/groups | Manage user groups with intuitive buttons
 
 
 /user command                               |  User detail

@@ -7,10 +7,11 @@ from telegram import TelegramError
 from ts3.examples.viewer import ChannelTreeNode
 from telegram import InlineKeyboardButton
 from telegram import InlineKeyboardMarkup
+from datetime import datetime
+from ts3.query import TS3QueryError
 import configparser
 import logging
 import uuid
-from datetime import datetime
 
 from teamSpeakTelegram import user_language, _
 
@@ -336,6 +337,77 @@ def get_users_tsdb():
         return users
 
 
+def get_ts_groups(include_defaults=False):
+    with ts3.query.TS3Connection(ts_host) as ts3conn:
+        try:
+            ts3conn.login(
+                client_login_name=ts_user,
+                client_login_password=ts_pass
+            )
+        except ts3.query.TS3QueryError as err:
+            print("Login failed:", err.resp.error["msg"])
+            exit(1)
+
+        ts3conn.use(sid=1)
+        ts_groups = ts3conn.servergrouplist().parsed
+        if not include_defaults:
+            ts_groups = [ts_group for ts_group in ts_groups if int(ts_group['savedb']) == 1]
+        return ts_groups
+
+
+def get_ts_groups_by_client_id(cldbid):
+    with ts3.query.TS3Connection(ts_host) as ts3conn:
+        try:
+            ts3conn.login(
+                client_login_name=ts_user,
+                client_login_password=ts_pass
+            )
+        except ts3.query.TS3QueryError as err:
+            print("Login failed:", err.resp.error["msg"])
+            exit(1)
+
+        ts3conn.use(sid=1)
+        ts_groups = ts3conn.servergroupsbyclientid(cldbid=cldbid).parsed
+        return ts_groups
+
+
+def get_ts_group(group_id):
+    with ts3.query.TS3Connection(ts_host) as ts3conn:
+        try:
+            ts3conn.login(
+                client_login_name=ts_user,
+                client_login_password=ts_pass
+            )
+        except ts3.query.TS3QueryError as err:
+            print("Login failed:", err.resp.error["msg"])
+            exit(1)
+
+        ts3conn.use(sid=1)
+        ts_groups = ts3conn.servergrouplist().parsed
+        ts_group = next(ts_group for ts_group in ts_groups if ts_group['sgid'] == str(group_id))
+        return ts_group
+
+
+def get_ts_users_in_group(group_id):
+    with ts3.query.TS3Connection(ts_host) as ts3conn:
+        try:
+            ts3conn.login(
+                client_login_name=ts_user,
+                client_login_password=ts_pass
+            )
+        except ts3.query.TS3QueryError as err:
+            print("Login failed:", err.resp.error["msg"])
+            exit(1)
+
+        ts3conn.use(sid=1)
+        try:
+            users = ts3conn.servergroupclientlist(sgid=group_id).parsed
+            users = [get_user_ts_info(user['cldbid']) for user in users]
+            return users
+        except TS3QueryError:
+            return False
+
+
 def get_user_ts_info(cldbid):
     with ts3.query.TS3Connection(ts_host) as ts3conn:
         try:
@@ -465,6 +537,48 @@ def kick_ts_user(bot, update, cldbid, kick_type):
 
 
 @user_language
+def add_ts_user_to_group(bot, update, chat_data, group_id, cldbid):
+    with ts3.query.TS3Connection(ts_host) as ts3conn:
+        try:
+            ts3conn.login(
+                client_login_name=ts_user,
+                client_login_password=ts_pass
+            )
+        except ts3.query.TS3QueryError as err:
+            print("Login failed:", err.resp.error["msg"])
+            exit(1)
+
+        ts3conn.use(sid=1)
+        ts3conn.servergroupaddclient(sgid=group_id, cldbid=cldbid)
+
+        bot.answer_callback_query(update.callback_query.id, _('User added successfully'))
+
+        clean_pages(chat_data, update.effective_message.message_id)
+        send_ts_group_details(bot, update, chat_data, group_id=group_id)
+
+
+@user_language
+def delete_ts_user_to_group(bot, update, chat_data, group_id, cldbid):
+    with ts3.query.TS3Connection(ts_host) as ts3conn:
+        try:
+            ts3conn.login(
+                client_login_name=ts_user,
+                client_login_password=ts_pass
+            )
+        except ts3.query.TS3QueryError as err:
+            print("Login failed:", err.resp.error["msg"])
+            exit(1)
+
+        ts3conn.use(sid=1)
+        ts3conn.servergroupdelclient(sgid=group_id, cldbid=cldbid)
+
+        bot.answer_callback_query(update.callback_query.id, _('User deleted from group successfully'))
+
+        del chat_data[update.effective_message.message_id]['pages']
+        send_ts_group_details(bot, update, chat_data, group_id=group_id)
+
+
+@user_language
 def markup_append_pagination(bot, update, items, markup, page, callback, items_per_page=10):
     pag_max = math.ceil(len(items) / items_per_page)
     pag_button = InlineKeyboardButton(_('Page') + ' %s/%s' % (str(page), str(pag_max)),
@@ -489,7 +603,7 @@ def markup_append_pagination(bot, update, items, markup, page, callback, items_p
 
 
 @user_language
-def paginate_items(bot, update, chat_data, items, principal_property, backend_property, text, callback):
+def paginate_items(bot, update, chat_data, items, principal_property, backend_property, text, callback, additional_row=None):
     message = update.effective_message
     chat_id = message.chat_id
     markup = []
@@ -511,12 +625,16 @@ def paginate_items(bot, update, chat_data, items, principal_property, backend_pr
 
     markup = markup_append_pagination(bot, update, items, markup, page, callback)
 
+    if additional_row is not None:
+        markup.append(additional_row)
+
     reply_markup = InlineKeyboardMarkup(markup)
+
+    if len(items) == 0:
+        text = _('No results')
     if not first_message:
         bot.edit_message_text(text, chat_id=chat_id, message_id=message.message_id, reply_markup=reply_markup,
                               parse_mode='Markdown')
-    elif len(items) == 0:
-        bot.send_message(chat_id, _('No results'))
     else:
         msg = bot.send_message(chat_id, text, disable_notification=True, reply_markup=reply_markup,
                                parse_mode='Markdown')
@@ -610,9 +728,121 @@ def assign_user_alias_step3(bot, update, chat_data, telegram_id):
 
 
 @user_language
+def send_ts_groups(bot, update, chat_data):
+    text = '👥 ' + _('*Group list:*') + '\n\n' \
+           + _('Here is a list of your TeamSpeak groups, pressing any of them will take you to his detail.')
+
+    paginate_items(bot, update, chat_data, items=get_ts_groups(), principal_property='name', backend_property='sgid',
+                   text=text, callback='GROUP')
+
+
+@user_language
+def send_ts_groups_by_user(bot, update, chat_data, cldbid):
+    text = '👥 ' + _('*Group list:*') + '\n\n' \
+           + _('Here is the TeamSpeak group list of this user, pressing any of them will take you to his detail.')
+
+    back_button_row = [InlineKeyboardButton('🔙 ' + _('Back'), callback_data='GROUP_BY_USER_%s_BACK' % cldbid)]
+
+    clean_pages(chat_data, update.effective_message.message_id)
+
+    paginate_items(bot, update, chat_data, items=get_ts_groups_by_client_id(cldbid),
+                   principal_property='name', backend_property='sgid', text=text, callback='GROUP',
+                   additional_row=back_button_row)
+
+
+@user_language
+def send_ts_group_details(bot, update, chat_data, group_id=None):
+    message = update.effective_message
+    chat_id = message.chat_id
+
+    if group_id is not None:
+        chat_data[message.message_id]['group_id'] = group_id
+    else:
+        group_id = chat_data[message.message_id]['group_id']
+
+    ts_group = get_ts_group(group_id)
+
+    if int(ts_group['savedb']) == 0:
+        bot.answer_callback_query(update.callback_query.id, _('Access to default group is forbidden'))
+        return False
+
+    text = '🔎 *' + ts_group['name'] + ' ' + _('group:') + '*'
+    markup = [[InlineKeyboardButton('👥 ' + _('List users'), callback_data='GROUP_DETAIL_USERS_%s' % group_id)],
+              [InlineKeyboardButton('➕ ' + _('Add user'), callback_data='GROUP_%s_ADD' % group_id),
+               InlineKeyboardButton('➖ ' + _('Delete user'), callback_data='GROUP_%s_DEL' % group_id)],
+              [InlineKeyboardButton('🔙 ' + _('Back'), callback_data='GROUP_DETAIL_BACK')]]
+    reply_markup = InlineKeyboardMarkup(markup)
+
+    bot.edit_message_text(text, chat_id=chat_id, message_id=message.message_id, reply_markup=reply_markup,
+                          parse_mode='Markdown')
+
+
+@user_language
+def send_ts_users_in_group(bot, update, chat_data, group_id=None):
+    message = update.effective_message
+
+    text = '👥 ' + _('*Group users:*') + '\n\n' \
+           + _('Here is a list of all users in this group, pressing any of them will take you to his detail.')
+    if group_id is not None:
+        chat_data[message.message_id]['group_id'] = group_id
+    else:
+        group_id = chat_data[message.message_id]['group_id']
+
+    users = get_ts_users_in_group(group_id)
+    users = sorted(users, key=lambda user: user['client_lastconnected'], reverse=True)
+
+    back_button_row = [InlineKeyboardButton('🔙 ' + _('Back'), callback_data='GROUP_DETAIL_USERS_%s_BACK' % group_id)]
+
+    paginate_items(bot, update, chat_data, items=users, principal_property='client_nickname',
+                   backend_property='client_database_id', text=text, callback='GROUP_DETAIL_USERS',
+                   additional_row=back_button_row)
+
+
+@user_language
+def send_add_user_to_group(bot, update, chat_data, group_id=None):
+    message = update.effective_message
+
+    text = '👥 ' + _('*Select an user to add to the group:*')
+
+    if group_id is not None:
+        chat_data[message.message_id]['group_id'] = group_id
+    else:
+        group_id = chat_data[message.message_id]['group_id']
+
+    users = get_users_tsdb()
+    users = sorted(users, key=lambda user: user['client_lastconnected'], reverse=True)
+
+    back_button_row = [InlineKeyboardButton('🔙 ' + _('Back'), callback_data='GROUP_%s_ADD_BACK' % group_id)]
+
+    paginate_items(bot, update, chat_data, items=users, principal_property='client_nickname', backend_property='cldbid',
+                   text=text, callback='GROUP_%s_ADD' % group_id, additional_row=back_button_row)
+
+
+@user_language
+def send_delete_user_from_group(bot, update, chat_data, group_id=None):
+    message = update.effective_message
+
+    text = '👥 ' + _('*Select an user to delete from group:*')
+
+    if group_id is not None:
+        chat_data[message.message_id]['group_id'] = group_id
+    else:
+        group_id = chat_data[message.message_id]['group_id']
+
+    users = get_ts_users_in_group(group_id)
+    users = sorted(users, key=lambda user: user['client_lastconnected'], reverse=True)
+
+    back_button_row = [InlineKeyboardButton('🔙 ' + _('Back'), callback_data='GROUP_%s_DEL_BACK' % group_id)]
+
+    paginate_items(bot, update, chat_data, items=users, principal_property='client_nickname',
+                   backend_property='client_database_id', text=text, callback='GROUP_%s_DEL' % group_id,
+                   additional_row=back_button_row)
+
+
+@user_language
 def send_users_tsdb(bot, update, chat_data):
-    text = '🎙 ' + _('*User list:*') + '\n\n' + _('Here is a list of all your TeamSpeak users, pressing any of them \
-                                           will take you to his detail.')
+    text = '🎙 ' + _('*User list:*') + '\n\n' \
+           + _('Here is a list of all your TeamSpeak users, pressing any of them will take you to his detail.')
     users = get_users_tsdb()
     users = sorted(users, key=lambda user: user['client_lastconnected'], reverse=True)
 
@@ -650,8 +880,9 @@ def details_user_ts(bot, update, chat_data, cldbid):
         server_kick = InlineKeyboardButton(_('Server kick'), callback_data='USER_KICK_%s_5' % cldbid)
         markup.append([channel_kick, server_kick])
 
-    markup.append([InlineKeyboardButton('🙍‍♂️ ' + _('Assign alias'), callback_data='USER_ALIAS_PRE_%s' % cldbid)])
-    markup.append([InlineKeyboardButton(_('Back'), callback_data='USER_BACK')])
+    markup.append([InlineKeyboardButton('🙍‍♂️ ' + _('Assign alias'), callback_data='USER_ALIAS_PRE_%s' % cldbid),
+                   InlineKeyboardButton('👥 ' + _('Groups'), callback_data='GROUP_BY_USER_%s' % cldbid)])
+    markup.append([InlineKeyboardButton('🔙 ' + _('Back'), callback_data='USER_BACK')])
 
     reply_markup = InlineKeyboardMarkup(markup)
     connected = ' 👁‍🗨' if user_clid else ''
@@ -673,13 +904,19 @@ def details_user_ts(bot, update, chat_data, cldbid):
                           parse_mode='Markdown')
 
 
+def clean_pages(chat_data, message_id):
+    no_chat_data = message_id not in chat_data or 'pages' not in chat_data[message_id]
+    if no_chat_data:
+        chat_data[message_id] = dict()
+    chat_data[message_id]['pages'] = 1
+
+
 @user_language
 def callback_query_handler(bot, update, chat_data):
     query_data = update.callback_query.data
     message = update.effective_message
 
-    no_chat_data = update.effective_user.id == ADMIN_ID and \
-                   (message.message_id not in chat_data or 'pages' not in chat_data[message.message_id])
+    no_chat_data = message.message_id not in chat_data or 'pages' not in chat_data[message.message_id]
 
     if update.effective_user.id == ADMIN_ID and no_chat_data:
         chat_data[message.message_id] = dict()
@@ -697,8 +934,8 @@ def callback_query_handler(bot, update, chat_data):
         bot.answer_callback_query(update.callback_query.id, _('You must be admin'))
 
     elif query_data.startswith('USER'):
-        if query_data.startswith('USER_PG'):
-            chat_data[message.message_id]['pages'] += 1 if query_data.startswith('USER_PG_NEXT') else -1
+        if 'PG' in query_data:
+            chat_data[message.message_id]['pages'] += 1 if 'NEXT' in query_data else -1
             send_users_tsdb(bot, update, chat_data)
 
         elif query_data.startswith('USER_BAN'):
@@ -735,3 +972,64 @@ def callback_query_handler(bot, update, chat_data):
 
         elif query_data.startswith('USER_BACK'):
             send_users_tsdb(bot, update, chat_data)
+
+    elif query_data.startswith('GROUP'):
+        if 'PG' in query_data:
+            chat_data[message.message_id]['pages'] += 1 if 'NEXT' in query_data else -1
+            if query_data.startswith('GROUP_DETAIL_USERS'):
+                send_ts_users_in_group(bot, update, chat_data)
+            elif 'ADD' in query_data:
+                group_id = query_data.split("GROUP_")[1].split("_ADD")[0]
+                send_add_user_to_group(bot, update, chat_data, group_id=int(group_id))
+            elif 'DEL' in query_data:
+                group_id = query_data.split("GROUP_")[1].split("_DEL")[0]
+                send_delete_user_from_group(bot, update, chat_data, group_id=int(group_id))
+            else:
+                send_ts_groups(bot, update, chat_data)
+
+        elif query_data.startswith('GROUP_BY_USER'):
+            cldbid = query_data.split("GROUP_BY_USER_")[1].split("_BACK")[0]
+            if 'BACK' in query_data:
+                details_user_ts(bot, update, chat_data, cldbid=int(cldbid))
+            else:
+                send_ts_groups_by_user(bot, update, chat_data, cldbid=cldbid)
+
+        elif query_data.startswith('GROUP_DETAIL_USERS'):
+            if query_data.startswith('GROUP_DETAIL_USERS_DETAIL'):
+                cldbid = query_data.split("GROUP_DETAIL_USERS_DETAIL_")[1]
+                details_user_ts(bot, update, chat_data, cldbid=int(cldbid))
+            else:
+                group_id = query_data.split("GROUP_DETAIL_USERS_")[1].split("_BACK")[0]
+                if 'BACK' in query_data:
+                    send_ts_group_details(bot, update, chat_data, group_id=int(group_id))
+                else:
+                    send_ts_users_in_group(bot, update, chat_data, group_id=int(group_id))
+
+        elif query_data.startswith('GROUP_DETAIL'):
+            if 'BACK' in query_data:
+                send_ts_groups(bot, update, chat_data)
+            else:
+                group_id = query_data.split("GROUP_DETAIL_")[1]
+                send_ts_group_details(bot, update, chat_data, group_id=int(group_id))
+
+        elif 'ADD' in query_data:
+            if query_data.endswith('ADD') or query_data.endswith('ADD_BACK'):
+                group_id = query_data.split("GROUP_")[1].split("_ADD")[0].split("_BACK")[0]
+                if 'BACK' in query_data:
+                    send_ts_group_details(bot, update, chat_data, group_id=int(group_id))
+                else:
+                    send_add_user_to_group(bot, update, chat_data, group_id=int(group_id))
+            elif 'ADD_DETAIL' in query_data:
+                group_id, cldbid = query_data.split("GROUP_")[1].split('_ADD_DETAIL_')
+                add_ts_user_to_group(bot, update, chat_data, group_id=int(group_id), cldbid=int(cldbid))
+
+        elif 'DEL' in query_data:
+            if query_data.endswith('DEL') or query_data.endswith('DEL_BACK'):
+                group_id = query_data.split("GROUP_")[1].split("_DEL")[0].split("_ADD")[0].split("_BACK")[0]
+                if 'BACK' in query_data:
+                    send_ts_group_details(bot, update, chat_data, group_id=int(group_id))
+                else:
+                    send_delete_user_from_group(bot, update, chat_data, group_id=int(group_id))
+            elif 'DEL_DETAIL' in query_data:
+                group_id, cldbid = query_data.split("GROUP_")[1].split('_DEL_DETAIL_')
+                delete_ts_user_to_group(bot, update, chat_data, group_id=int(group_id), cldbid=int(cldbid))
