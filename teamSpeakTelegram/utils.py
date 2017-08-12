@@ -438,7 +438,7 @@ def unban_ts_user(bot, update, chat_data, cldbid, banid):
         if cldbid:
             details_user_ts(bot, update, chat_data, cldbid=cldbid)
         else:
-            users_tsdb(bot, update, chat_data)
+            send_users_tsdb(bot, update, chat_data)
 
 
 @user_language
@@ -465,12 +465,12 @@ def kick_ts_user(bot, update, cldbid, kick_type):
 
 
 @user_language
-def markup_append_pagination(bot, update, items, markup, page, callback):
-    pag_max = math.ceil(len(items) / 10)
+def markup_append_pagination(bot, update, items, markup, page, callback, items_per_page=10):
+    pag_max = math.ceil(len(items) / items_per_page)
     pag_button = InlineKeyboardButton(_('Page') + ' %s/%s' % (str(page), str(pag_max)),
                                       callback_data='%s_PG_NEXT' % callback)
 
-    if len(items) >= 5:
+    if len(items) >= items_per_page:
         if page == 1:
             sig_button = InlineKeyboardButton(_('Page') + ' %s/%s ⏩' % (str(page), str(pag_max)),
                                               callback_data='%s_PG_NEXT' % callback)
@@ -486,6 +486,42 @@ def markup_append_pagination(bot, update, items, markup, page, callback):
             markup.append([ant_button])
 
     return markup
+
+
+@user_language
+def paginate_items(bot, update, chat_data, items, principal_property, backend_property, text, callback):
+    message = update.effective_message
+    chat_id = message.chat_id
+    markup = []
+    first_message = bool(update.message)
+
+    page = chat_data[message.message_id]['pages'] if not first_message else 1
+
+    start = 10 * (page - 1) if page > 1 else 0
+    end = start + 10 if start + 10 < len(items) else len(items)
+    for i in range(start, end, 2):
+        item1 = items[i]
+        row = [InlineKeyboardButton(item1[principal_property],
+                                    callback_data='%s_DETAIL_%s' % (callback, str(item1[backend_property])))]
+        if i + 1 < len(items):
+            item2 = items[i + 1]
+            row.append(InlineKeyboardButton(item2[principal_property],
+                                            callback_data='%s_DETAIL_%s' % (callback, str(item2[backend_property]))))
+        markup.append(row)
+
+    markup = markup_append_pagination(bot, update, items, markup, page, callback)
+
+    reply_markup = InlineKeyboardMarkup(markup)
+    if not first_message:
+        bot.edit_message_text(text, chat_id=chat_id, message_id=message.message_id, reply_markup=reply_markup,
+                              parse_mode='Markdown')
+    elif len(items) == 0:
+        bot.send_message(chat_id, _('No results'))
+    else:
+        msg = bot.send_message(chat_id, text, disable_notification=True, reply_markup=reply_markup,
+                               parse_mode='Markdown')
+        chat_data[msg.message_id] = dict()
+        chat_data[msg.message_id]['pages'] = page
 
 
 @user_language
@@ -570,46 +606,18 @@ def assign_user_alias_step3(bot, update, chat_data, telegram_id):
 
     menu_bot, menu_update = chat_data['bot_update']
     del chat_data['bot_update']
-    users_tsdb(menu_bot, menu_update, chat_data)
+    send_users_tsdb(menu_bot, menu_update, chat_data)
 
 
 @user_language
-def users_tsdb(bot, update, chat_data):
-    message = update.effective_message
-    chat_id = message.chat_id
-    markup = []
-    users = get_users_tsdb()
-    users = sorted(users, key=lambda user: user['client_lastconnected'], reverse=True)
-    first_message = bool(update.message)
-
-    page = chat_data[message.message_id]['pages'] if not first_message else 1
-
-    start = 10 * (page-1) if page > 1 else 0
-    end = start+10 if start+10 < len(users) else len(users)
-    for i in range(start, end, 2):
-        user1 = users[i]
-        row = [InlineKeyboardButton(user1['client_nickname'], callback_data='USER_DETAIL_%s' % str(user1['cldbid']))]
-        if i+1 < len(users):
-            user2 = users[i+1]
-            row.append(InlineKeyboardButton(user2['client_nickname'],
-                                            callback_data='USER_DETAIL_%s' % str(user2['cldbid'])))
-        markup.append(row)
-
-    markup = markup_append_pagination(bot, update, users, markup, page, 'USER')
-
-    reply_markup = InlineKeyboardMarkup(markup)
+def send_users_tsdb(bot, update, chat_data):
     text = '🎙 ' + _('*User list:*') + '\n\n' + _('Here is a list of all your TeamSpeak users, pressing any of them \
                                            will take you to his detail.')
-    if not first_message:
-        bot.edit_message_text(text, chat_id=chat_id, message_id=message.message_id, reply_markup=reply_markup,
-                              parse_mode='Markdown')
-    elif len(users) == 0:
-        bot.send_message(chat_id, _('No results'))
-    else:
-        msg = bot.send_message(chat_id, text, disable_notification=True, reply_markup=reply_markup,
-                               parse_mode='Markdown')
-        chat_data[msg.message_id] = dict()
-        chat_data[msg.message_id]['pages'] = page
+    users = get_users_tsdb()
+    users = sorted(users, key=lambda user: user['client_lastconnected'], reverse=True)
+
+    paginate_items(bot, update, chat_data, items=users, principal_property='client_nickname', backend_property='cldbid',
+                   text=text, callback='USER')
 
 
 @user_language
@@ -669,6 +677,14 @@ def details_user_ts(bot, update, chat_data, cldbid):
 def callback_query_handler(bot, update, chat_data):
     query_data = update.callback_query.data
     message = update.effective_message
+
+    no_chat_data = update.effective_user.id == ADMIN_ID and \
+                   (message.message_id not in chat_data or 'pages' not in chat_data[message.message_id])
+
+    if update.effective_user.id == ADMIN_ID and no_chat_data:
+        chat_data[message.message_id] = dict()
+        chat_data[message.message_id]['pages'] = 1
+
     if query_data.startswith('TS_UPDATE'):
         a = get_ts_view()
         if a == message.text_markdown:
@@ -677,19 +693,13 @@ def callback_query_handler(bot, update, chat_data):
             ts_view(bot, update, message_id=message.message_id, chat_id=update.effective_chat.id)
             bot.answer_callback_query(update.callback_query.id, _('Successfully updated'))
 
+    elif update.effective_user.id != ADMIN_ID:
+        bot.answer_callback_query(update.callback_query.id, _('You must be admin'))
+
     elif query_data.startswith('USER'):
-        no_chat_data = update.effective_user.id == ADMIN_ID and \
-                       (message.message_id not in chat_data or 'pages' not in chat_data[message.message_id])
-        if no_chat_data:
-            chat_data[message.message_id] = dict()
-            chat_data[message.message_id]['pages'] = 1
-
-        if update.effective_user.id != ADMIN_ID:
-            bot.answer_callback_query(update.callback_query.id, _('You must be admin'))
-
-        elif query_data.startswith('USER_PG'):
+        if query_data.startswith('USER_PG'):
             chat_data[message.message_id]['pages'] += 1 if query_data.startswith('USER_PG_NEXT') else -1
-            users_tsdb(bot, update, chat_data)
+            send_users_tsdb(bot, update, chat_data)
 
         elif query_data.startswith('USER_BAN'):
             if query_data.startswith('USER_BAN_ID'):
@@ -724,5 +734,4 @@ def callback_query_handler(bot, update, chat_data):
                 assign_user_alias_step3(bot, update, chat_data, telegram_id)
 
         elif query_data.startswith('USER_BACK'):
-            users_tsdb(bot, update, chat_data)
-
+            send_users_tsdb(bot, update, chat_data)
