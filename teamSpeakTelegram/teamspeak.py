@@ -15,6 +15,7 @@ config.read('config.ini')
 
 TOKEN_ID = config.get('Telegram', 'token_id') if config.has_option('Telegram', 'token_id') else None
 ADMIN_ID = config.getint('Telegram', 'admin_id') if config.has_option('Telegram', 'admin_id') else None
+TS_HOST = config['TS']['ts_host']
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -27,6 +28,10 @@ def start(bot, update, args):
     message = update.message
     user = message.from_user
     res = False
+
+    link = "http://www.teamspeak.com/invite/%s/" % TS_HOST
+    reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton(_('Connect TS'), url=link)]])
+
     if args:
         res = utils.validate_invitation_token(token=args[0], user_id=user.id, name=user.first_name)
 
@@ -36,8 +41,9 @@ def start(bot, update, args):
     elif utils.is_allow(user.id):
         text = _("Hello %s, using /who or /ts you can check who's in teamspeak.") % user.first_name
     else:
-        text = _("Welcome, ask admin to generate an invitation link via /generate")
-    bot.sendMessage(message.chat_id, text, reply_to_message_id=message.message_id)
+        reply_markup = None
+        text = _("Welcome, ask admin to generate an invitation link by /generate")
+    bot.sendMessage(message.chat_id, text, reply_to_message_id=message.message_id, reply_markup=reply_markup)
 
 
 @user_language
