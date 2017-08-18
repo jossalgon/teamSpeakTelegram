@@ -4,6 +4,7 @@ import pymysql
 import ts3
 from telegram import ForceReply
 from telegram import TelegramError
+from telegram.ext import ConversationHandler
 from ts3.examples.viewer import ChannelTreeNode
 from telegram import InlineKeyboardButton
 from telegram import InlineKeyboardMarkup
@@ -1033,3 +1034,42 @@ def callback_query_handler(bot, update, chat_data):
             elif 'DEL_DETAIL' in query_data:
                 group_id, cldbid = query_data.split("GROUP_")[1].split('_DEL_DETAIL_')
                 delete_ts_user_to_group(bot, update, chat_data, group_id=int(group_id), cldbid=int(cldbid))
+
+
+def ts_gm(message_text):
+    with ts3.query.TS3Connection(ts_host) as ts3conn:
+        try:
+            ts3conn.login(
+                client_login_name=ts_user,
+                client_login_password=ts_pass
+            )
+        except ts3.query.TS3QueryError as err:
+            print("Login failed:", err.resp.error["msg"])
+            exit(1)
+
+        ts3conn.use(sid=1)
+        ts3conn.gm(msg=message_text)
+
+
+@user_language
+def pre_send_gm(bot, update):
+    message = update.message
+    if is_allow(message.from_user.id):
+        text = _("Ok, what message do you want to send?\nUse /cancel to cancel the command.")
+        bot.send_message(message.chat_id, text, reply_to_message_id=message.message_id,
+                         reply_markup=ForceReply(selective=True))
+        return 0
+    else:
+        text = _("You aren't allow to use this")
+        bot.send_message(message.chat_id, text, reply_to_message_id=message.message_id)
+        return ConversationHandler.END
+
+
+@user_language
+def send_gm(bot, update):
+    message = update.message
+    ts_gm(message.text)
+
+    text = _("Global message has been sent to server successfully.")
+    bot.send_message(message.chat_id, text, reply_to_message_id=message.message_id)
+    return ConversationHandler.END

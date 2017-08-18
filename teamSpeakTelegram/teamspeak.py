@@ -1,7 +1,9 @@
 # -*- encoding: utf-8 -*-
 from telegram import InlineKeyboardButton
 from telegram import InlineKeyboardMarkup
+from telegram import ReplyKeyboardRemove
 from telegram.ext import CallbackQueryHandler
+from telegram.ext import ConversationHandler
 from telegram.ext import Filters
 from telegram.ext import MessageHandler
 from telegram.ext import Updater, CommandHandler, RegexHandler
@@ -98,6 +100,13 @@ def notify(bot, update, args):
                 pass
 
 
+def cancel(bot, update):
+    message = update.message
+    bot.sendMessage(chat_id=message.chat_id, text=_('Global text has been cancelled.'),
+                    reply_to_message_id=message.message_id, reply_markup=ReplyKeyboardRemove(selective=True))
+    return ConversationHandler.END
+
+
 def log_error(bot, update, error):
     logger.warning('Update "%s" caused error "%s"' % (update, error))
 
@@ -135,6 +144,17 @@ def main():
     dp.add_handler(CommandHandler('users', utils.send_users_tsdb, Filters.user(user_id=ADMIN_ID), pass_chat_data=True))
     dp.add_handler(CommandHandler('groups', utils.send_ts_groups, Filters.user(user_id=ADMIN_ID), pass_chat_data=True))
     dp.add_handler(MessageHandler(filter_assign_alias, utils.assign_user_alias_step2, pass_chat_data=True))
+
+    gm_handler = ConversationHandler(
+        allow_reentry=True,
+        entry_points=[CommandHandler('gm', utils.pre_send_gm)],
+        states={
+            0: [MessageHandler(Filters.text, utils.send_gm)],
+        },
+
+        fallbacks=[CommandHandler('cancel', cancel), CommandHandler('headshot', cancel)]
+    )
+    dp.add_handler(gm_handler)
 
     # Add response for unknown private messages
     dp.add_handler(MessageHandler(Filters.private, unknown))

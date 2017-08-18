@@ -55,6 +55,7 @@ Command | Uses
 /notify | Send a message with the args received from the command to all the telegram users
 /users | Manage users with intuitive buttons
 /groups | Manage user groups with intuitive buttons
+/gm | Send a global message to your teamSpeak server
 
 
 /user command                               |  User detail
