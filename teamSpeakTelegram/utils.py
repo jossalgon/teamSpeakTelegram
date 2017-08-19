@@ -38,7 +38,8 @@ def create_database():
     try:
         with con.cursor() as cur:
             cur.execute(
-                "CREATE TABLE IF NOT EXISTS `TsUsers` ( \
+                'SET sql_notes = 0; \
+                CREATE TABLE IF NOT EXISTS `TsUsers` ( \
                   `Telegram_id` int(11) NOT NULL, \
                   `Name` text NOT NULL, \
                   `Ts_id` int(11) \
@@ -50,7 +51,8 @@ def create_database():
                 CREATE TABLE IF NOT EXISTS `Invitations` ( \
                   `token` text NOT NULL, \
                   `usedBy` int(11) \
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;")
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4; \
+                SET sql_notes = 1;')
     except Exception as exception:
         print(str(exception))
     finally:
